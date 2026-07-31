@@ -3,20 +3,20 @@
 ## Current phase
 
 - Phase: 00
-- Status: NOT_STARTED
-- Active branch:
-- Last verified commit:
-- Updated at:
+- Status: DONE
+- Active branch: main
+- Last verified commit: 146834b
+- Updated at: 2026-07-31
 
 ## Phase checklist
 
 | Phase | Name | Status | Human approval |
 |---|---|---|---|
-| 00 | Project audit and decisions | NOT_STARTED | Required |
+| 00 | Project audit and decisions | DONE | Approved 2026-07-31 |
 | 01 | Repository bootstrap | NOT_STARTED | Required |
 | 02 | Architecture and contracts | NOT_STARTED | Required |
 | 03 | Identity and planets | NOT_STARTED | Required |
-| 04 | Captain’s Cabin and goals | NOT_STARTED | Required |
+| 04 | Captain's Cabin and goals | NOT_STARTED | Required |
 | 05 | Planet Feed and moderation | NOT_STARTED | Required |
 | 06 | AI Auto-Log | NOT_STARTED | Required |
 | 07 | Gamification | NOT_STARTED | Required |
@@ -26,7 +26,7 @@
 | 11 | DevOps and observability | NOT_STARTED | Required |
 | 12 | Final demo and thesis evidence | NOT_STARTED | Required |
 
-Trạng thái hợp lệ:
+Valid statuses:
 
 - NOT_STARTED
 - PLANNING
@@ -38,15 +38,14 @@ Trạng thái hợp lệ:
 
 ## Decisions pending
 
-- [ ] Final visual direction.
-- [ ] LLM provider and budget.
-- [ ] Transcript acquisition method.
-- [ ] Email provider.
-- [ ] OAuth providers for MVP.
-- [ ] Deployment environment.
-- [ ] MVP mini-game confirmed as Space Dice.
-- [ ] Data retention and deletion rules.
-- [ ] AI evaluation dataset owner and consent.
+All Phase 00 decisions (D01-D12) have been approved. See `docs/decisions-register.md`.
+
+Decisions requiring future human approval:
+
+- [ ] LLM provider and model selection (before Phase 06).
+- [ ] LLM budget activation (before Phase 06).
+- [ ] Real email provider for staging.
+- [ ] Staging/production deployment.
 
 ## Active blockers
 
@@ -54,12 +53,12 @@ None.
 
 ## Latest test evidence
 
-Chưa có.
+None yet. First evidence expected in Phase 01.
 
 ## Known technical debt
 
-Chưa có.
+None yet.
 
 ## Manual work queue
 
-Xem `docs/06-manual-work.md`.
+See `docs/06-manual-work.md`.

@@ -1,0 +1,21 @@
+# Risk Register
+
+Updated: 2026-07-31
+
+| # | Risk | Likelihood | Impact | Mitigation | Owner |
+|---|---|---|---|---|---|
+| R01 | LLM API costs exceed budget when real provider is activated | Medium | High | Budget is zero until Phase 06. Before activation: must present provider, model, estimated cost, quota, cost-control mechanism, and fallback for human approval. Mock adapter used in all earlier phases | Human |
+| R02 | YouTube transcript fetch blocked or unreliable | High | Medium | Manual paste is mandatory fallback and always available. YouTube fetch is best-effort via adapter interface. Failure documented as limitation in thesis | Dev |
+| R03 | Scope creep delays MVP completion | Medium | High | Strict P0/P1/P2 separation. Phase gates require human approval before advancing. 16-week plan provides structure | Human + Lead |
+| R04 | AI structured output quality insufficient for thesis evaluation | Medium | High | Prompt versioning, human reference comparison, evaluation instrumentation from start. Mock adapter enables pipeline testing before real provider | Dev + Human |
+| R05 | Privacy breach via IDOR or search index leaking private journals | Low | Critical | Negative authorization tests mandatory. QA agent reviews all data-access code. Manual two-account testing | Dev + Human |
+| R06 | WebSocket reconnect loses game state or awards duplicate points | Medium | High | Redis snapshot for active state. Idempotent actions. Integration tests for reconnect scenarios | Dev |
+| R07 | Prisma migration breaks existing data in development | Low | Medium | Review all migrations before applying. Rollback strategy documented. No auto-migration in production | Dev + Human |
+| R08 | Phaser integration with Next.js causes SSR conflicts | Medium | Medium | Phaser loaded only in client components. Dynamic import with ssr: false. Tested early in Phase 08 | Dev |
+| R09 | BullMQ worker loses jobs on restart | Low | High | BullMQ persistence in Redis. Job state tracked in PostgreSQL. Worker restart tested | Dev |
+| R10 | 16-week timeline pressure leads to skipping tests or cutting quality | Medium | High | Definition of Done enforced by lead agent. Evidence capture required per phase. Phase gates prevent advancing without quality checks | Human + Lead |
+| R11 | Single developer bottleneck | High | Medium | Agent-assisted development reduces manual effort. Clear phase separation enables focused work | Human |
+| R12 | Dependency vulnerabilities in npm packages | Medium | Medium | Audit on install. Pin major versions. Review before adding new dependencies | Dev + Human |
+| R13 | AI prompt injection via malicious transcript content | Medium | High | Transcript treated as untrusted data. System/user prompt separation. No code execution from transcript | Dev |
+| R14 | Point system abuse (self-interaction, duplicate votes) | Medium | Medium | Server-side validation. Unique constraints. Daily caps. Self-interaction blocked | Dev |
+| R15 | Load test fails to meet NFR targets (100 WebSocket connections) | Medium | Medium | Test early in Phase 10. Optimize hot paths. Document limitations honestly in thesis | Dev + Human |
