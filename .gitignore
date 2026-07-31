@@ -1,0 +1,14 @@
+# Local Claude configuration
+.claude/settings.local.json
+CLAUDE.local.md
+.claude/agent-memory-local/
+
+# Secrets
+.env
+.env.*
+!.env.example
+secrets/
+config/credentials*
+
+# Generated evidence that may contain local paths
+docs/evidence/**/raw/

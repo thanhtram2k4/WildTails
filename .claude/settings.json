@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(pnpm lint*)",
+      "Bash(pnpm typecheck*)",
+      "Bash(pnpm test*)",
+      "Bash(pnpm build*)",
+      "Bash(pnpm --filter * lint*)",
+      "Bash(pnpm --filter * typecheck*)",
+      "Bash(pnpm --filter * test*)",
+      "Bash(pnpm --filter * build*)",
+      "Bash(docker compose config*)",
+      "Bash(docker compose ps*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)",
+      "Read(./config/credentials*)",
+      "Write(./.env)",
+      "Write(./.env.*)",
+      "Bash(rm -rf *)",
+      "Bash(git reset --hard*)",
+      "Bash(git push --force*)",
+      "Bash(git clean -fd*)",
+      "Bash(docker system prune*)",
+      "Bash(npm publish*)",
+      "Bash(pnpm publish*)",
+      "Bash(curl *)",
+      "Bash(wget *)"
+    ]
+  },
+  "autoMemoryEnabled": true
+}
