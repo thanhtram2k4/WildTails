@@ -3,8 +3,8 @@ name: wildtails-frontend
 description: Applies WildTails frontend conventions for Next.js, accessibility, visual identity, typed contracts, loading/error/offline states, privacy-safe rendering, and Phaser boundaries.
 user-invocable: false
 paths:
-  - "apps/web/**"
-  - "packages/ui/**"
+  - 'apps/web/**'
+  - 'packages/ui/**'
 ---
 
 Frontend rules:

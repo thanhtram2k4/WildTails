@@ -2,7 +2,7 @@
 
 ## Goal
 
-Xây một mini-game server-authoritative có reconnect.
+Build a server-authoritative mini-game with reconnect.
 
 ## Prompt
 
@@ -25,4 +25,4 @@ Xây một mini-game server-authoritative có reconnect.
 
 ## Critical gate
 
-Client-supplied dice/result phải bị bỏ qua.
+Client-supplied dice/result must be ignored.

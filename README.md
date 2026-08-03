@@ -1,37 +1,37 @@
 # WildTails – Claude Code Development System
 
-Bộ cấu hình này biến proposal **WildTails – Catalyst Verse** thành một quy trình phát triển có kiểm soát dành cho Claude Code.
+This configuration set turns the **WildTails – Catalyst Verse** proposal into a controlled development workflow for Claude Code.
 
-Mục tiêu của bộ cấu hình không phải là để Claude tự ý xây toàn bộ sản phẩm trong một lần chạy. Mục tiêu là giúp Claude:
+The goal is not to have Claude build the entire product autonomously in a single run. The goal is to help Claude:
 
-- đọc đúng bối cảnh dự án;
-- chia công việc theo từng vertical slice;
-- giao việc cho đúng agent chuyên môn;
-- tạo mã nguồn kèm test, tài liệu và bằng chứng;
-- dừng lại tại những quyết định cần con người phê duyệt;
-- không tự động triển khai production, sửa secret hoặc phá hủy dữ liệu.
+- read the correct project context;
+- split work into vertical slices;
+- delegate to the right specialist agent;
+- produce code with tests, documentation and evidence;
+- stop at decisions that require human approval;
+- never automatically deploy to production, edit secrets or destroy data.
 
-## 1. Kiến trúc dự án được chốt
+## 1. Confirmed project architecture
 
 - Monorepo: pnpm workspace.
 - Frontend: Next.js App Router + TypeScript + Tailwind CSS.
 - Backend: NestJS modular monolith.
-- Worker: NestJS/BullMQ worker bằng TypeScript.
+- Worker: NestJS/BullMQ worker in TypeScript.
 - Database: PostgreSQL + Prisma.
-- Cache, queue và game state tạm thời: Redis.
+- Cache, queue and ephemeral game state: Redis.
 - Real-time: Socket.IO.
-- 2D interaction và mini-game: Phaser.
-- Object storage: MinIO khi local, S3-compatible khi deploy.
-- AI: LLM API thông qua adapter.
-- Testing: Jest/Vitest, Supertest, Playwright, k6 hoặc Artillery.
+- 2D interaction and mini-game: Phaser.
+- Object storage: MinIO for local, S3-compatible for deploy.
+- AI: LLM API via adapter.
+- Testing: Jest/Vitest, Supertest, Playwright, k6 or Artillery.
 - CI/CD: GitHub Actions.
 - Observability: OpenTelemetry + Grafana.
 
-## 2. Cách đặt bộ cấu hình vào repository
+## 2. How to place this configuration in the repository
 
-Sao chép toàn bộ nội dung của thư mục này vào thư mục gốc của repository WildTails.
+Copy the entire contents of this directory into the root of the WildTails repository.
 
-Cấu trúc tối thiểu sau khi sao chép:
+Minimum structure after copying:
 
 ```text
 wildtails/
@@ -47,36 +47,36 @@ wildtails/
     └── skills/
 ```
 
-## 3. Cài môi trường
+## 3. Environment setup
 
-Yêu cầu khuyến nghị:
+Recommended requirements:
 
 - Node.js 24 LTS.
 - pnpm 11.
 - Git.
-- Docker Desktop hoặc Docker Engine + Compose.
-- Claude Code phiên bản mới nhất.
-- GitHub CLI nếu sử dụng plugin review/commit.
+- Docker Desktop or Docker Engine + Compose.
+- Latest version of Claude Code.
+- GitHub CLI if using the review/commit plugin.
 
-Cài Claude Code:
+Install Claude Code:
 
 ```bash
 npm install -g @anthropic-ai/claude-code
 claude doctor
 ```
 
-Khởi động trong repository:
+Start in the repository:
 
 ```bash
 cd wildtails
 claude --agent wildtails-lead
 ```
 
-Nếu agent chưa xuất hiện, thoát Claude Code và mở lại sau khi thư mục `.claude/agents/` đã tồn tại.
+If the agent does not appear, exit Claude Code and reopen it after the `.claude/agents/` directory exists.
 
-## 4. Lệnh làm việc chính
+## 4. Main working commands
 
-Chạy phase theo thứ tự:
+Run phases in order:
 
 ```text
 /run-phase 00
@@ -86,27 +86,27 @@ Chạy phase theo thứ tự:
 /run-phase 12
 ```
 
-Mỗi phase phải kết thúc bằng:
+Each phase must end with:
 
-1. mã nguồn hoặc tài liệu đã tạo;
-2. test liên quan;
-3. danh sách file thay đổi;
-4. bằng chứng lệnh kiểm tra;
-5. rủi ro còn lại;
-6. mục cần người dùng phê duyệt;
-7. cập nhật `PROJECT_STATUS.md`.
+1. generated source code or documentation;
+2. related tests;
+3. list of changed files;
+4. evidence of verification commands;
+5. remaining risks;
+6. items requiring user approval;
+7. update to `PROJECT_STATUS.md`.
 
-Không được bắt đầu phase tiếp theo khi acceptance gate của phase hiện tại chưa đạt.
+Do not start the next phase until the current phase's acceptance gate passes.
 
-## 5. Chạy agent chính
+## 5. Running the main agent
 
-Agent chính là `wildtails-lead`.
+The main agent is `wildtails-lead`.
 
 ```bash
 claude --agent wildtails-lead
 ```
 
-Agent này điều phối các agent phụ:
+This agent coordinates sub-agents:
 
 - `solution-architect`
 - `frontend-engineer`
@@ -117,37 +117,37 @@ Agent này điều phối các agent phụ:
 - `qa-security-reviewer`
 - `devops-observability-engineer`
 
-Không dùng đồng thời nhiều agent để sửa cùng một file. Agent lead phải phân vùng ownership trước khi giao việc song song.
+Do not use multiple agents to edit the same file simultaneously. The lead agent must partition ownership before delegating parallel work.
 
-## 6. Nguyên tắc vibe coding an toàn
+## 6. Safe vibe-coding principles
 
-Claude được phép:
+Claude is allowed to:
 
-- tạo plan;
-- tạo nhánh feature;
-- sửa mã nguồn trong phạm vi phase;
-- chạy lint, test, typecheck và build;
-- tạo migration ở local;
-- tạo tài liệu kỹ thuật và ADR;
-- tạo fixture, seed và mock;
-- cập nhật `PROJECT_STATUS.md`.
+- create plans;
+- create feature branches;
+- edit source code within the phase scope;
+- run lint, tests, typecheck and build;
+- create local migrations;
+- create technical documentation and ADRs;
+- create fixtures, seeds and mocks;
+- update `PROJECT_STATUS.md`.
 
-Claude không được tự quyết định:
+Claude must not autonomously decide to:
 
-- chọn nhà cung cấp LLM trả phí;
-- mua dịch vụ hoặc tạo billing;
-- nhập secret thật;
-- chạy migration trên production;
-- xóa database hoặc bucket;
-- deploy production;
-- merge pull request;
-- thay đổi phạm vi MVP;
-- công khai dữ liệu nhật ký;
-- dùng dữ liệu người thật cho AI evaluation khi chưa có consent.
+- choose a paid LLM provider;
+- purchase a service or create billing;
+- enter real secrets;
+- run migrations on production;
+- delete a database or bucket;
+- deploy to production;
+- merge a pull request;
+- change the MVP scope;
+- make journal data public;
+- use real user data for AI evaluation without consent.
 
-Danh sách đầy đủ nằm trong `docs/06-manual-work.md`.
+The full list is in `docs/06-manual-work.md`.
 
-## 7. Workflow tiêu chuẩn cho một feature
+## 7. Standard workflow for a feature
 
 ```text
 Clarify requirement
@@ -162,25 +162,25 @@ Clarify requirement
 → request human approval
 ```
 
-Dùng skill:
+Use skills:
 
 ```text
-/vertical-slice <tên feature>
+/vertical-slice <feature name>
 /quality-gate
-/privacy-first-api <endpoint hoặc module>
-/capture-evidence <tên hạng mục>
+/privacy-first-api <endpoint or module>
+/capture-evidence <item name>
 ```
 
-## 8. Quy tắc Git
+## 8. Git rules
 
-- Một phase có thể gồm nhiều commit nhỏ.
-- Không commit secret, `.env`, credential hoặc dữ liệu người dùng thật.
-- Không force push.
-- Không dùng `git reset --hard` nếu chưa được người dùng yêu cầu rõ ràng.
-- Mỗi PR chỉ chứa một vertical slice hoặc một nhóm thay đổi có cùng mục tiêu.
-- PR phải có acceptance criteria, test evidence và screenshot khi có giao diện.
+- One phase may contain many small commits.
+- Do not commit secrets, `.env`, credentials or real user data.
+- Do not force push.
+- Do not use `git reset --hard` unless the user explicitly requests it.
+- Each PR contains only one vertical slice or one group of changes with the same goal.
+- PRs must have acceptance criteria, test evidence and screenshots when there is a UI.
 
-## 9. Tài liệu nên đọc trước khi code
+## 9. Documents to read before coding
 
 1. `CLAUDE.md`
 2. `docs/00-project-brief.md`
@@ -189,17 +189,17 @@ Dùng skill:
 5. `docs/03-domain-rules.md`
 6. `docs/04-security-and-privacy.md`
 7. `docs/07-definition-of-done.md`
-8. phase tương ứng trong `prompts/phases/`
+8. the corresponding phase in `prompts/phases/`
 
-## 10. Kết quả mong đợi
+## 10. Expected outcomes
 
-Khi hoàn thành P0 và P1, repository phải chứng minh được:
+When P0 and P1 are complete, the repository must demonstrate:
 
-- journal mặc định PRIVATE;
-- không thể truy cập chéo journal;
-- AI Auto-Log chạy bằng queue và tạo draft;
-- người dùng duyệt trước khi publish;
-- game server-authoritative và có reconnect;
-- mọi thay đổi điểm có transaction ledger;
-- có unit, integration, E2E, security và load test;
-- có tài liệu kiến trúc, API, ERD, deployment và test evidence.
+- journals default to PRIVATE;
+- cross-user journal access is impossible;
+- AI Auto-Log runs via queue and creates drafts;
+- users review before publishing;
+- game is server-authoritative with reconnect;
+- every point change has a transaction ledger entry;
+- unit, integration, E2E, security and load tests exist;
+- architecture, API, ERD, deployment and test evidence documentation exists.

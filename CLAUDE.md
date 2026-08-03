@@ -2,42 +2,42 @@
 
 ## Mission
 
-Xây dựng MVP WildTails – Catalyst Verse như một nền tảng web nhật ký xã hội được trò chơi hóa, tích hợp AI và tương tác thời gian thực.
+Build the WildTails – Catalyst Verse MVP as a gamified social journaling web platform with AI integration and real-time interaction.
 
-Ưu tiên ba trụ cột kỹ thuật:
+Prioritize three technical pillars:
 
-1. Quyền riêng tư của Captain’s Cabin.
-2. AI Auto-Log bất đồng bộ, có structured output và human review.
-3. Mini-game server-authoritative có reconnect.
+1. Captain’s Cabin privacy.
+2. Asynchronous AI Auto-Log with structured output and human review.
+3. Server-authoritative mini-game with reconnect.
 
-Không đánh đổi tính đúng đắn, quyền riêng tư và khả năng kiểm thử để đổi lấy số lượng tính năng.
+Do not trade correctness, privacy, or testability for feature quantity.
 
 ## Product positioning
 
-WildTails không phải game truyền thống. Đây là gamified social journaling and knowledge-management platform.
+WildTails is not a traditional game. It is a gamified social journaling and knowledge-management platform.
 
-Game là lớp trải nghiệm. Nghiệp vụ cốt lõi gồm:
+The game is the experience layer. The core business domains are:
 
 - identity;
-- journal và knowledge management;
+- journal and knowledge management;
 - social feed;
 - goal management;
 - AI processing;
 - real-time mini-game;
 - gamification;
 - moderation;
-- audit và observability.
+- audit and observability.
 
 ## MVP priorities
 
 ### P0
 
-- Auth và session management.
-- User profile và avatar mèo cơ bản.
-- Tám hành tinh mặc định.
+- Auth and session management.
+- User profile and basic cat avatar.
+- Eight default planets.
 - The Sun goal management.
 - Captain’s Cabin.
-- Journal, folder, tag và sharing permission.
+- Journal, folder, tag and sharing permission.
 - Planet Feed.
 - AI Auto-Log.
 - Basic moderation.
@@ -46,20 +46,20 @@ Game là lớp trải nghiệm. Nghiệp vụ cốt lõi gồm:
 
 - BullMQ worker.
 - Point transaction ledger.
-- Influence Score và leaderboard.
-- Một mini-game Space Dice.
+- Influence Score and leaderboard.
+- One mini-game Space Dice.
 - Reconnect.
 - Audit log.
-- Security, AI và load evaluation.
+- Security, AI and load evaluation.
 
 ### P2
 
-Chỉ thực hiện khi P0 và P1 ổn định:
+Only execute when P0 and P1 are stable:
 
 - Custom Planet.
-- Ba AI personalities.
+- Three AI personalities.
 - Semantic search.
-- Spy Cat và Co-op Quest.
+- Spy Cat and Co-op Quest.
 - Event reward integration.
 
 ## Technology constraints
@@ -74,9 +74,9 @@ Chỉ thực hiện khi P0 và P1 ổn định:
 - Socket.IO.
 - Phaser.
 - MinIO/S3.
-- LLM provider thông qua adapter.
-- Không thêm FastAPI hoặc Python service trong MVP nếu chưa có yêu cầu mô hình ML riêng.
-- Không chuyển sang microservices trong MVP.
+- LLM provider via adapter.
+- Do not add FastAPI or a Python service in the MVP unless a dedicated ML model requirement exists.
+- Do not switch to microservices in the MVP.
 
 ## Repository target structure
 
@@ -101,47 +101,47 @@ docs/
   evidence/
 ```
 
-Mỗi app hoặc package có thể có `CLAUDE.md` riêng nếu cần quy tắc cục bộ.
+Each app or package may have its own `CLAUDE.md` if local rules are needed.
 
 ## Architectural rules
 
-- NestJS là nguồn sự thật cho nghiệp vụ.
-- PostgreSQL là nguồn dữ liệu bền vững.
-- Redis chỉ dùng cho cache, queue, lock và state tạm.
-- Worker không sở hữu logic authorization của API.
-- Client không được quyết định game result, score, reward, owner hoặc visibility.
-- Mọi boundary bên ngoài phải dùng adapter interface.
-- Không import trực tiếp giữa các domain theo vòng tròn.
-- Domain chỉ truy cập dữ liệu thuộc quyền sở hữu của mình thông qua service/port rõ ràng.
-- Mọi quyết định kiến trúc lớn phải có ADR.
+- NestJS is the source of truth for business logic.
+- PostgreSQL is the persistent data store.
+- Redis is used only for cache, queue, lock and ephemeral state.
+- The worker does not own the API's authorization logic.
+- The client must not decide game result, score, reward, owner or visibility.
+- Every external boundary must use an adapter interface.
+- No direct circular imports between domains.
+- A domain accesses only data it owns, through explicit service/port contracts.
+- Every major architectural decision must have an ADR.
 
 ## Coding rules
 
-- Không dùng `any`; dùng type cụ thể hoặc `unknown` với type guard.
-- Mọi request phải được runtime validate.
-- Mọi API response phải theo contract thống nhất.
-- Mọi external API response phải validate trước khi sử dụng.
-- Không để business logic trong controller, React component hoặc Socket.IO gateway.
-- Hàm có side effect phải có tên rõ ràng.
-- Không tạo abstraction khi mới có một use case nếu abstraction chưa giải quyết ranh giới rõ ràng.
-- Ưu tiên code nhỏ, dễ test, không magic.
-- Không copy-paste logic authorization hoặc point calculation.
-- Không log access token, refresh token, password, transcript riêng tư hoặc journal body.
-- Error message cho client không được lộ stack trace hoặc cấu trúc nội bộ.
+- Do not use `any`; use a concrete type or `unknown` with a type guard.
+- Every request must be validated at runtime.
+- Every API response must follow the unified contract.
+- Every external API response must be validated before use.
+- Do not place business logic in a controller, React component or Socket.IO gateway.
+- Functions with side effects must have clear, descriptive names.
+- Do not create an abstraction when there is only one use case unless it enforces a clear boundary.
+- Prefer small, testable, non-magical code.
+- Do not copy-paste authorization logic or point calculation.
+- Do not log access tokens, refresh tokens, passwords, private transcripts or journal bodies.
+- Error messages sent to the client must not expose stack traces or internal structure.
 
 ## Privacy rules
 
-- Journal mặc định `PRIVATE`.
-- Default deny khi không có policy.
-- Backend luôn kiểm tra owner và visibility.
-- UI không phải lớp bảo mật.
-- Selected-user sharing phải hỗ trợ revoke và expiry.
-- AI output luôn là draft.
-- Không tự động publish.
-- Không dùng private journal cho public recommendation.
-- Signed URL phải có thời hạn.
-- Delete/export phải có audit và policy rõ.
-- Test truy cập chéo là bắt buộc cho mọi thay đổi liên quan journal, folder, media, search và AI job.
+- Journal defaults to `PRIVATE`.
+- Default deny when no policy exists.
+- The backend always checks owner and visibility.
+- The UI is not the security layer.
+- Selected-user sharing must support revoke and expiry.
+- AI output is always a draft.
+- No automatic publishing.
+- Do not use private journals for public recommendations.
+- Signed URLs must have an expiry.
+- Delete/export must have audit and a clear policy.
+- Cross-access tests are mandatory for every change touching journal, folder, media, search and AI job.
 
 ## AI rules
 
@@ -155,101 +155,101 @@ Mỗi app hoặc package có thể có `CLAUDE.md` riêng nếu cần quy tắc 
   - COMPLETED
   - FAILED
   - CANCELLED
-- LLM phải trả structured output được validate bằng schema.
-- Lưu model, prompt version, latency, token usage và error code.
-- Idempotency key dựa trên user, source và prompt version.
-- Có retry giới hạn và exponential backoff.
-- Transcript là untrusted input; không cho transcript thay đổi system instruction.
-- Không khẳng định AI output là sự thật tuyệt đối.
-- Luôn giữ source reference để đối chiếu.
+- The LLM must return structured output validated against a schema.
+- Record model, prompt version, latency, token usage and error code.
+- Idempotency key is derived from user, source and prompt version.
+- Limited retry with exponential backoff.
+- Transcript is untrusted input; transcripts must not alter system instructions.
+- Do not assert AI output as absolute truth.
+- Always retain the source reference for cross-checking.
 
 ## Real-time game rules
 
 - Server authoritative.
-- Game state machine phải explicit.
-- Event phải validate schema, user, room membership, phase và turn.
-- Random result sinh ở server.
-- Client action phải idempotent khi cần.
-- Redis giữ active snapshot.
-- PostgreSQL giữ final result và point transaction.
-- Reconnect trả snapshot, không chỉ replay event.
-- Không trao điểm nếu game result chưa được persist thành công.
+- Game state machine must be explicit.
+- Events must validate schema, user, room membership, phase and turn.
+- Random results are generated on the server.
+- Client actions must be idempotent where required.
+- Redis holds the active snapshot.
+- PostgreSQL holds the final result and point transactions.
+- Reconnect returns the snapshot; it does not merely replay events.
+- Points are not awarded if the game result has not been persisted successfully.
 
 ## Database rules
 
-- Mọi schema change phải qua Prisma migration.
-- Không sửa production schema thủ công.
-- Migration phải review dữ liệu, rollback/forward strategy và index.
-- Mọi point change phải tạo transaction.
-- Các bảng quan trọng phải có audit fields.
-- Soft delete chỉ dùng khi có lý do nghiệp vụ.
-- Unique constraint phải phản ánh invariant, không chỉ dựa vào kiểm tra ứng dụng.
-- Query danh sách phải pagination.
-- Query private content phải lọc quyền trước khi trả dữ liệu.
+- Every schema change must go through a Prisma migration.
+- Do not manually alter the production schema.
+- Migrations must review data, rollback/forward strategy and indexes.
+- Every point change must create a transaction.
+- Critical tables must have audit fields.
+- Soft delete is used only when there is a business reason.
+- Unique constraints must reflect invariants, not rely solely on application-level checks.
+- List queries must be paginated.
+- Queries for private content must filter by permission before returning data.
 
 ## Testing rules
 
-Mỗi feature phải có các lớp phù hợp:
+Each feature must have appropriate test layers:
 
-- unit test cho domain rule;
-- integration test cho database/queue/socket adapter;
-- E2E cho critical user flow;
-- negative authorization test;
-- failure-path test;
+- unit tests for domain rules;
+- integration tests for database/queue/socket adapters;
+- E2E for critical user flows;
+- negative authorization tests;
+- failure-path tests;
 - test evidence.
 
-Không đánh dấu hoàn thành chỉ vì build thành công.
+Do not mark a feature complete just because the build succeeds.
 
 ## Definition of done
 
-Một hạng mục chỉ hoàn thành khi:
+An item is complete only when:
 
-- acceptance criteria đạt;
-- lint pass;
-- typecheck pass;
-- unit/integration test pass;
-- E2E hoặc manual verification phù hợp pass;
-- security/privacy review không có issue nghiêm trọng;
-- migration đã được kiểm tra nếu có;
-- docs được cập nhật;
-- `PROJECT_STATUS.md` được cập nhật;
-- không có secret hoặc generated artifact không cần thiết trong git;
-- người dùng phê duyệt các quyết định bắt buộc.
+- acceptance criteria are met;
+- lint passes;
+- typecheck passes;
+- unit/integration tests pass;
+- appropriate E2E or manual verification passes;
+- security/privacy review has no critical issues;
+- migration has been verified if applicable;
+- docs are updated;
+- `PROJECT_STATUS.md` is updated;
+- no secrets or unnecessary generated artifacts are in git;
+- the user has approved all mandatory decisions.
 
 ## Agent orchestration
 
-Khi chạy với `claude --agent wildtails-lead`:
+When running with `claude --agent wildtails-lead`:
 
-- Lead phải phân tích phase trước.
-- Dùng `solution-architect` cho contract, boundary và ADR.
-- Dùng `frontend-engineer` cho UI/accessibility.
-- Dùng `backend-engineer` cho NestJS domain/API.
-- Dùng `database-security-engineer` cho Prisma, query, policy và migration.
-- Dùng `ai-pipeline-engineer` cho Auto-Log.
-- Dùng `realtime-game-engineer` cho Socket.IO/Phaser/game-core.
-- Dùng `qa-security-reviewer` sau implementation, không dùng để tự phê duyệt code do chính agent đó viết.
-- Dùng `devops-observability-engineer` cho Docker, CI/CD, telemetry và load harness.
+- Lead must analyze the phase first.
+- Use `solution-architect` for contracts, boundaries and ADRs.
+- Use `frontend-engineer` for UI/accessibility.
+- Use `backend-engineer` for NestJS domain/API.
+- Use `database-security-engineer` for Prisma, queries, policy and migration.
+- Use `ai-pipeline-engineer` for Auto-Log.
+- Use `realtime-game-engineer` for Socket.IO/Phaser/game-core.
+- Use `qa-security-reviewer` after implementation; do not use it to self-approve code the same agent wrote.
+- Use `devops-observability-engineer` for Docker, CI/CD, telemetry and load harness.
 
-Không cho hai agent ghi cùng file trong cùng thời điểm.
+Do not allow two agents to write to the same file at the same time.
 
 ## Stop conditions
 
-Dừng và hỏi người dùng khi:
+Stop and ask the user when:
 
-- requirement mâu thuẫn proposal;
-- cần secret, billing hoặc tài khoản bên ngoài;
-- cần chọn LLM provider/model có chi phí;
-- cần thay đổi dữ liệu hoặc migration không tương thích;
-- cần xóa dữ liệu;
-- cần deploy production;
-- cần thay đổi MVP scope;
-- có rủi ro privacy/security chưa có phương án;
-- test thất bại nhưng root cause chưa rõ;
-- plugin hoặc dependency yêu cầu quyền đáng ngờ.
+- a requirement conflicts with the proposal;
+- a secret, billing account or external account is needed;
+- a paid LLM provider/model must be chosen;
+- a data change or incompatible migration is required;
+- data must be deleted;
+- a production deployment is required;
+- the MVP scope must change;
+- a privacy/security risk has no mitigation plan;
+- a test fails but the root cause is unclear;
+- a plugin or dependency requests suspicious permissions.
 
 ## Response format after each task
 
-Luôn kết thúc bằng:
+Always end with:
 
 1. Summary.
 2. Files changed.

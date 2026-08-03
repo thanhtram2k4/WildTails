@@ -2,68 +2,68 @@
 
 ## Journal
 
-- Mặc định PRIVATE.
-- Owner luôn có quyền.
-- SELECTED_USERS cần permission record.
-- Permission có thể hết hạn.
-- Revoke có hiệu lực ở request tiếp theo.
-- Publish tạo hoặc liên kết Post; không biến private journal thành public mà không có hành động rõ.
-- AI summary là version/draft, không overwrite nội dung người dùng âm thầm.
+- Default PRIVATE.
+- Owner always has access.
+- SELECTED_USERS requires a permission record.
+- Permission can expire.
+- Revoke takes effect on the next request.
+- Publish creates or links a Post; it does not silently make a private journal public without an explicit action.
+- AI summary is a version/draft; it does not silently overwrite user content.
 
 ## Goal
 
-- Progress từ 0 đến 100.
-- Deadline có thể null.
-- Journal/action item có thể liên kết goal.
-- Không tự động đánh dấu completed chỉ vì AI đề xuất.
+- Progress from 0 to 100.
+- Deadline may be null.
+- Journals/action items may be linked to a goal.
+- Do not automatically mark a goal completed solely because AI suggests it.
 
 ## Planet
 
-- Default planet do system sở hữu.
-- Member mới có thể post nếu rule cho phép.
-- Moderator chỉ thao tác planet được phân công.
-- Admin action phải audit.
+- Default planets are owned by the system.
+- New members may post if the planet rule allows it.
+- A moderator may only act on the planet they are assigned to.
+- Admin actions must be audited.
 
 ## Feed
 
-- Không chỉ xếp theo like.
-- Baseline:
+- Not ranked by likes alone.
+- Baseline factors:
   - relevance;
   - content quality;
   - freshness;
   - relationship;
   - diversity;
   - moderation penalty.
-- Giới hạn bài liên tiếp cùng tác giả.
-- Report hợp lệ giảm hạng.
-- Rule-based trước ML.
+- Limit consecutive posts from the same author.
+- Valid reports lower rank.
+- Rule-based before ML.
 
 ## Points
 
-- Không có endpoint “set total score” cho client.
-- Mọi thay đổi là transaction.
-- Transaction phải có source/reference.
-- Self-interaction không tạo influence.
-- Duplicate interaction không tạo thêm điểm.
-- Daily cap có thể cấu hình.
-- Leaderboard dùng snapshot theo kỳ.
+- No "set total score" endpoint for the client.
+- Every change is a transaction.
+- Every transaction must have a source/reference.
+- Self-interaction does not generate influence.
+- Duplicate interaction does not generate additional points.
+- Daily cap is configurable.
+- Leaderboard uses periodic snapshots.
 
 ## AI Auto-Log
 
-- Chỉ job owner xem trạng thái và output.
-- Source URL phải validate.
-- Transcript có thể nhập thủ công.
-- Output parse/validate trước lưu.
-- Không publish tự động.
-- User edit tạo version.
-- Failure phải có error code hữu ích.
+- Only the job owner can view the job status and output.
+- Source URL must be validated.
+- Transcript may be entered manually.
+- Output must be parsed and validated before saving.
+- No automatic publishing.
+- User edits create a version.
+- Failure must have a useful error code.
 
 ## Space Dice
 
-- 4–6 người.
-- Server tạo dice result.
-- Server chọn question.
-- Mỗi turn chỉ một action hợp lệ.
-- Timeout do server xử lý.
-- Reconnect không cho thực hiện lại action đã hoàn tất.
-- Reward chỉ cấp sau khi game final result được persist.
+- 4–6 players.
+- Server generates the dice result.
+- Server selects the question.
+- Only one valid action per turn.
+- Timeout is handled by the server.
+- Reconnect does not allow re-submitting a completed action.
+- Reward is only granted after the game final result is persisted.

@@ -1,19 +1,19 @@
 # Local Claude Notes
 
-Đổi tên file này thành `CLAUDE.local.md` nếu cần ghi chú riêng cho máy cá nhân.
+Rename this file to `CLAUDE.local.md` if you need machine-specific notes.
 
-Không commit:
+Do not commit:
 
-- đường dẫn local;
-- token;
-- account ID;
-- secret;
-- credential;
-- production host;
-- thông tin người dùng thật.
+- local file paths;
+- tokens;
+- account IDs;
+- secrets;
+- credentials;
+- production hosts;
+- real user information.
 
-Ví dụ nội dung hợp lệ:
+Examples of valid content:
 
-- Docker Desktop chạy qua WSL2.
-- Trình duyệt kiểm thử chính là Chrome.
-- Port 3000 đang được ứng dụng khác sử dụng; dùng 3100.
+- Docker Desktop running via WSL2.
+- Primary test browser is Chrome.
+- Port 3000 is in use by another application; use 3100.

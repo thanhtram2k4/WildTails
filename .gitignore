@@ -1,3 +1,28 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.next/
+.turbo/
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+coverage/
+
+# Prisma
+packages/database/prisma/*.db
+
 # Local Claude configuration
 .claude/settings.local.json
 CLAUDE.local.md
@@ -10,5 +35,5 @@ CLAUDE.local.md
 secrets/
 config/credentials*
 
-# Generated evidence that may contain local paths
+# Generated evidence raw data
 docs/evidence/**/raw/

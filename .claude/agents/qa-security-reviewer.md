@@ -10,7 +10,7 @@ mcpServers:
   - playwright:
       type: stdio
       command: npx
-      args: ["-y", "@playwright/mcp@latest"]
+      args: ['-y', '@playwright/mcp@latest']
 ---
 
 You are an independent QA and security reviewer.

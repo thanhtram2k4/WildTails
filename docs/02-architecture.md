@@ -26,30 +26,30 @@ NestJS API
 
 ## Domain ownership
 
-| Domain | Owns |
-|---|---|
-| Identity | User, profile, session, avatar, follow/block |
-| Planet | Planet, membership, role, rule, invitation |
-| Knowledge | Journal, folder, version, share permission, goal, tag |
-| Social | Post, comment, reaction, save, report |
-| AI | Job, job step, source, chunk, summary, prompt version |
-| Game | Session, participant, event, question, vote |
-| Gamification | Point transaction, influence event, leaderboard |
-| Platform | Notification, media, audit, search, system config |
+| Domain       | Owns                                                  |
+| ------------ | ----------------------------------------------------- |
+| Identity     | User, profile, session, avatar, follow/block          |
+| Planet       | Planet, membership, role, rule, invitation            |
+| Knowledge    | Journal, folder, version, share permission, goal, tag |
+| Social       | Post, comment, reaction, save, report                 |
+| AI           | Job, job step, source, chunk, summary, prompt version |
+| Game         | Session, participant, event, question, vote           |
+| Gamification | Point transaction, influence event, leaderboard       |
+| Platform     | Notification, media, audit, search, system config     |
 
 ## Dependency rule
 
-- Domain không import trực tiếp infrastructure chi tiết của domain khác.
-- Cross-domain call đi qua public application service hoặc event.
-- Không tạo event-driven architecture phức tạp cho mọi thay đổi.
-- Dùng synchronous call khi cần transaction nhất quán.
-- Dùng queue khi task dài hoặc retryable.
+- A domain does not directly import the infrastructure details of another domain.
+- Cross-domain calls go through a public application service or event.
+- Do not build a complex event-driven architecture for every change.
+- Use synchronous calls when a consistent transaction is required.
+- Use a queue when the task is long-running or retryable.
 
 ## Proposed package boundaries
 
-- `packages/contracts`: API và socket schemas.
-- `packages/database`: Prisma client và repository infrastructure.
-- `packages/game-core`: pure state machine, không phụ thuộc NestJS/Phaser.
+- `packages/contracts`: API and socket schemas.
+- `packages/database`: Prisma client and repository infrastructure.
+- `packages/game-core`: pure state machine, no dependency on NestJS or Phaser.
 - `packages/ui`: reusable UI.
 - `packages/testing`: fixtures, factories, test helpers.
 

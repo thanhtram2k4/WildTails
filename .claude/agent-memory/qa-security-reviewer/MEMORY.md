@@ -1,0 +1,1 @@
+- [Phase 01 QA Review Findings](project_phase01_qa_review.md) — Pass/fail verdicts and open findings from Phase 01 (Repository Bootstrap) independent security review

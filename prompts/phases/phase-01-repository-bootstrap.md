@@ -2,11 +2,11 @@
 
 ## Goal
 
-Tạo monorepo chạy được và quality baseline.
+Create a working monorepo and quality baseline.
 
 ## Prompt
 
-1. Tạo pnpm workspace.
+1. Create pnpm workspace.
 2. Scaffold:
    - apps/web;
    - apps/api;
@@ -17,20 +17,20 @@ Tạo monorepo chạy được và quality baseline.
    - packages/ui;
    - packages/config;
    - packages/testing.
-3. Cấu hình strict TypeScript.
-4. Cấu hình lint/format.
-5. Tạo Docker Compose cho PostgreSQL, Redis và MinIO.
-6. Tạo `.env.example`, không tạo secret thật.
-7. Tạo health endpoint.
-8. Tạo root scripts: dev, lint, typecheck, test, build.
-9. Tạo CI baseline.
-10. Viết setup guide.
-11. Chạy quality gate.
+3. Configure strict TypeScript.
+4. Configure lint/format.
+5. Create Docker Compose for PostgreSQL, Redis and MinIO.
+6. Create `.env.example`; do not create real secrets.
+7. Create a health endpoint.
+8. Create root scripts: dev, lint, typecheck, test, build.
+9. Create CI baseline.
+10. Write a setup guide.
+11. Run quality gate.
 
 ## Acceptance
 
-- Fresh clone có hướng dẫn rõ.
-- `pnpm install`, lint, typecheck, test và build chạy.
-- Docker Compose config hợp lệ.
-- Web/API/worker có health proof.
-- Không commit secret.
+- A fresh clone has clear instructions.
+- `pnpm install`, lint, typecheck, test and build all run.
+- Docker Compose config is valid.
+- Web/API/worker have health proof.
+- No secrets committed.

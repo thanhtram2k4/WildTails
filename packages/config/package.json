@@ -1,0 +1,12 @@
+{
+  "name": "@wildtails/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@eslint/js": "^9.30.1",
+    "typescript-eslint": "^8.65.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.8.0"
+  }
+}
