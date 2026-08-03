@@ -2,7 +2,7 @@
 
 ## Goal
 
-Tạo point ledger và leaderboard giải thích được.
+Create an explainable point ledger and leaderboard.
 
 ## Prompt
 
@@ -15,10 +15,10 @@ Tạo point ledger và leaderboard giải thích được.
 7. Leaderboard snapshot.
 8. Redis cache.
 9. Rebuild/reconciliation command.
-10. Admin adjustment cần audit và reason.
-11. Tests cho duplicate, rollback và reconciliation.
+10. Admin adjustment requires audit and reason.
+11. Tests for duplicate, rollback and reconciliation.
 12. UI point history.
 
 ## Manual gate
 
-Người dùng duyệt trọng số và business meaning. Không tuyên bố công thức tối ưu.
+User approves weights and business meaning. Do not claim the formula is optimal.

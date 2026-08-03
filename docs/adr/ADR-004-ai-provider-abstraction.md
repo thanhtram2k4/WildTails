@@ -10,6 +10,7 @@
 AI Auto-Log needs an LLM to summarize transcripts into structured journal drafts. The specific provider depends on budget, quality, and structured output support. We must be able to switch providers without rewriting business logic.
 
 Per human decisions D04 and D05:
+
 - Phases 01-05 use a mock LLM adapter only. No paid LLM service is connected or called.
 - Budget is zero until Phase 06.
 - Before Phase 06, the lead must present: proposed provider, model, estimated cost, usage quota, cost-control mechanism, and fallback strategy for human approval.

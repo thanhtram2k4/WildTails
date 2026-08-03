@@ -1,0 +1,2 @@
+- [game-core Phase 01 scaffold](project_game_core_phase01.md) — empty typed scaffold only; Space Dice state machine deferred to Phase 08
+- [ESLint .mjs extension rule](feedback_eslint_mjs_extension.md) — use .mjs for ESLint flat config when package lacks "type":"module"

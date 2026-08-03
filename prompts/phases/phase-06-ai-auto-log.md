@@ -2,7 +2,7 @@
 
 ## Goal
 
-Xây pipeline AI bất đồng bộ có kiểm soát.
+Build a controlled asynchronous AI pipeline.
 
 ## Prompt
 
@@ -16,13 +16,13 @@ Xây pipeline AI bất đồng bộ có kiểm soát.
 8. Structured output schema.
 9. Prompt versioning.
 10. Draft persistence.
-11. Job polling hoặc notification.
-12. Human edit trước publish.
+11. Job polling or notification.
+12. Human edit before publish.
 13. Retry/backoff.
-14. Mock tests cho timeout, bad JSON, duplicate job và worker restart.
+14. Mock tests for timeout, bad JSON, duplicate job and worker restart.
 15. Metrics: latency, token, model, attempts.
-16. Không gọi API trả phí thật cho test mặc định.
+16. Do not call a paid real API in default tests.
 
 ## Manual gate
 
-Người dùng chọn provider, model, budget, quota và transcript method.
+User selects provider, model, budget, quota and transcript method.

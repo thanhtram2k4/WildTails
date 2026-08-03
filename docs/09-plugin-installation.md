@@ -1,8 +1,8 @@
 # Claude Code Plugins and Skills
 
-## 1. Plugin chính thức từ Anthropic
+## 1. Official plugins from Anthropic
 
-Trong Claude Code:
+In Claude Code:
 
 ```text
 /plugin marketplace add anthropics/claude-code
@@ -14,17 +14,17 @@ Trong Claude Code:
 /reload-plugins
 ```
 
-Khuyến nghị:
+Recommendations:
 
-- `feature-dev`: workflow phát triển feature.
-- `frontend-design`: tránh giao diện AI chung chung.
-- `pr-review-toolkit`: review test, type, error handling và code quality.
-- `security-guidance`: nhắc rủi ro bảo mật khi sửa code.
-- `commit-commands`: hỗ trợ commit/PR.
+- `feature-dev`: feature development workflow.
+- `frontend-design`: avoids generic AI interfaces.
+- `pr-review-toolkit`: reviews tests, types, error handling and code quality.
+- `security-guidance`: prompts security risks when editing code.
+- `commit-commands`: assists with commits/PRs.
 
-Không khuyến nghị bật vòng lặp tự động dài khi mới bắt đầu hoặc khi chưa có test gate.
+Not recommended to enable long automatic loops when starting out or when no test gate exists.
 
-## 2. Skills mẫu chính thức
+## 2. Official sample skills
 
 ```text
 /plugin marketplace add anthropics/skills
@@ -32,18 +32,18 @@ Không khuyến nghị bật vòng lặp tự động dài khi mới bắt đầ
 /reload-plugins
 ```
 
-Skill đáng chú ý:
+Notable skills:
 
-- `webapp-testing`: kiểm thử ứng dụng local bằng Playwright.
-- `frontend-design`: hỗ trợ thiết kế giao diện.
-- `skill-creator`: tạo skill mới.
-- `mcp-builder`: chỉ cần khi tự xây MCP server.
+- `webapp-testing`: tests local applications using Playwright.
+- `frontend-design`: assists with interface design.
+- `skill-creator`: creates new skills.
+- `mcp-builder`: only needed when building a custom MCP server.
 
-Hãy kiểm tra nội dung, license và quyền thực thi trước khi trust.
+Always review content, license and execution permissions before trusting.
 
 ## 3. Community collections
 
-Có thể tham khảo, không nên cài toàn bộ:
+May be consulted; do not install everything:
 
 - `VoltAgent/awesome-agent-skills`
 - `hesreallyhim/awesome-claude-code`
@@ -51,32 +51,32 @@ Có thể tham khảo, không nên cài toàn bộ:
 - `affaan-m/everything-claude-code`
 - `Mindrally/skills`
 
-Quy trình an toàn:
+Safe process:
 
-1. Chọn đúng một skill.
-2. Đọc toàn bộ `SKILL.md`.
-3. Kiểm tra scripts, hooks và MCP.
-4. Kiểm tra network call.
-5. Kiểm tra command phá hủy.
-6. Pin commit/tag.
-7. Test trong repository thử.
-8. Chỉ sau đó mới copy vào `.claude/skills/`.
+1. Select exactly one skill.
+2. Read the entire `SKILL.md`.
+3. Check scripts, hooks and MCP.
+4. Check network calls.
+5. Check for destructive commands.
+6. Pin to a commit/tag.
+7. Test in a trial repository.
+8. Only then copy into `.claude/skills/`.
 
-Không clone và chạy install script không rõ nguồn chỉ vì repository có nhiều star.
+Do not clone and run an install script of unknown origin just because the repository has many stars.
 
-## 4. Kiểm tra sau cài
+## 4. Post-installation checks
 
 ```text
 /doctor
 /plugin
 ```
 
-Kiểm tra:
+Verify:
 
-- plugin load thành công;
-- không trùng tên agent;
-- không trùng skill;
-- permission không quá rộng;
-- không có MCP lạ;
-- không đọc `.env`;
-- không tự chạy deploy.
+- plugin loaded successfully;
+- no duplicate agent names;
+- no duplicate skill names;
+- permissions are not overly broad;
+- no unknown MCPs;
+- not reading `.env`;
+- not self-triggering deploy.

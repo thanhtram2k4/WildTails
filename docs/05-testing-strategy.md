@@ -56,15 +56,15 @@
 
 ## Test data
 
-- Không dùng dữ liệu người thật.
-- Seed deterministic.
-- Factory cho user, planet, journal, post, game.
-- Test accounts có role rõ.
-- External adapters có mock và recorded safe fixture.
+- Do not use real user data.
+- Deterministic seed.
+- Factory for user, planet, journal, post, game.
+- Test accounts have explicit roles.
+- External adapters have mocks and recorded safe fixtures.
 
 ## Evidence
 
-Mỗi phase lưu:
+Each phase stores:
 
 ```text
 docs/evidence/phase-XX/

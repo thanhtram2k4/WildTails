@@ -2,11 +2,11 @@
 
 ## Product
 
-WildTails – Catalyst Verse là nền tảng web kết hợp:
+WildTails – Catalyst Verse is a web platform that combines:
 
 - private journaling;
 - knowledge management;
-- social feed theo hành tinh;
+- planet-based social feed;
 - goal tracking;
 - AI Auto-Log;
 - real-time mini-game;
@@ -14,19 +14,19 @@ WildTails – Catalyst Verse là nền tảng web kết hợp:
 
 ## Core spaces
 
-- **The Sun**: mục tiêu, wishlist, progress.
-- **Captain’s Cabin**: journal, folder, tag, media, AI draft và sharing.
+- **The Sun**: goals, wishlist, progress.
+- **Captain's Cabin**: journal, folder, tag, media, AI draft and sharing.
 - **Planet Feed**: post, comment, reaction, save, report.
-- **Meeting Lounge**: game room và networking.
+- **Meeting Lounge**: game room and networking.
 - **Eight default planets**: Learning, Sports, Finance, Work, Travel, Health, Pets, Art.
 
 ## Main users
 
 - Gen Z.
-- Sinh viên năm cuối.
-- Người đi làm trẻ.
-- Startup founder/co-founder.
-- Community builder.
+- Final-year students.
+- Young working professionals.
+- Startup founders/co-founders.
+- Community builders.
 
 ## Key problems
 
@@ -45,17 +45,17 @@ WildTails – Catalyst Verse là nền tảng web kết hợp:
 
 ## Research questions
 
-- AI Auto-Log có giảm thời gian ghi chú trong khi giữ độ chính xác không?
-- Dual-space architecture ngăn truy cập trái phép như thế nào?
-- Server-authoritative WebSocket duy trì consistency khi reconnect ra sao?
-- Influence Score hạn chế spam bằng quy tắc nào?
-- Hybrid search có cải thiện relevance không?
+- Does AI Auto-Log reduce note-taking time while maintaining accuracy?
+- How does the dual-space architecture prevent unauthorized access?
+- How does a server-authoritative WebSocket maintain consistency during reconnect?
+- What rules does Influence Score use to limit spam?
+- Does hybrid search improve relevance?
 
 ## MVP success
 
-- Critical flow hoạt động end-to-end.
-- Privacy test pass.
-- AI job có structured output và human review.
-- Một game có reconnect.
-- Point ledger khớp tổng điểm.
-- Có test và evidence cho thesis.
+- Critical flows work end-to-end.
+- Privacy tests pass.
+- AI job has structured output and human review.
+- One game has reconnect.
+- Point ledger matches total score.
+- Tests and evidence exist for the thesis.

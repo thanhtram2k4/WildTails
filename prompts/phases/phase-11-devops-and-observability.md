@@ -2,24 +2,24 @@
 
 ## Goal
 
-Tạo staging-ready system và vận hành có thể quan sát.
+Create a staging-ready system with observable operations.
 
 ## Prompt
 
 1. Production-oriented Dockerfiles.
-2. Compose local.
+2. Local Compose.
 3. CI lint/type/test/build.
 4. Migration job design.
 5. Health/readiness.
-6. Structured logs và request ID.
+6. Structured logs and request ID.
 7. OpenTelemetry instrumentation.
-8. Metrics cho API, queue, socket, DB và business.
+8. Metrics for API, queue, socket, DB and business.
 9. Dashboard config.
 10. Backup/restore runbook.
 11. Staging deploy guide.
 12. Rollback guide.
-13. Không deploy production.
+13. Do not deploy to production.
 
 ## Human gate
 
-Người dùng tự tạo cloud resources, secret, DNS và chạy staging/production deploy.
+User must create cloud resources, secrets, DNS and run staging/production deployment.

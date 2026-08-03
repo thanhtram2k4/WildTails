@@ -2,7 +2,7 @@
 
 ## Goal
 
-Kiểm tra toàn bộ trust boundary.
+Audit all trust boundaries.
 
 ## Prompt
 
@@ -20,8 +20,8 @@ Kiểm tra toàn bộ trust boundary.
 12. Audit coverage.
 13. Dependency review.
 14. Run independent security reviewer.
-15. Tạo remediation report.
+15. Create remediation report.
 
 ## Human gate
 
-Critical/high issue phải fix hoặc được chấp nhận rõ bằng văn bản.
+Critical/high issues must be fixed or explicitly accepted in writing.

@@ -7,21 +7,21 @@
 
 ## Context
 
-Mô tả vấn đề và constraint.
+Describe the problem and constraints.
 
 ## Decision
 
-Quyết định được chọn.
+The chosen decision.
 
 ## Alternatives considered
 
 ### Alternative A
 
-Ưu và nhược điểm.
+Pros and cons.
 
 ### Alternative B
 
-Ưu và nhược điểm.
+Pros and cons.
 
 ## Consequences
 
@@ -33,8 +33,8 @@ Quyết định được chọn.
 
 ## Validation
 
-Cách kiểm tra quyết định đúng.
+How to verify the decision is correct.
 
 ## Revisit trigger
 
-Điều kiện cần xem xét lại ADR.
+Conditions under which this ADR should be reconsidered.

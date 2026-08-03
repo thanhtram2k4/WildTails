@@ -2,21 +2,21 @@
 
 ## Goal
 
-Tạo bằng chứng định lượng cho MVP và thesis.
+Create quantitative evidence for the MVP and thesis.
 
 ## Prompt
 
-1. Hoàn thiện unit/integration/E2E matrix.
+1. Complete unit/integration/E2E matrix.
 2. Load test API/feed/socket.
-3. Failure injection worker/reconnect.
-4. Tạo AI evaluation harness.
-5. Tạo dataset template.
-6. Tính coverage, accuracy, hallucination, edit rate, latency, failure rate.
-7. Tạo usability task script.
-8. Không tạo số liệu giả.
-9. Lưu raw result và interpretation riêng.
-10. Ghi limitation.
+3. Failure injection for worker/reconnect.
+4. Create AI evaluation harness.
+5. Create dataset template.
+6. Calculate coverage, accuracy, hallucination, edit rate, latency, failure rate.
+7. Create usability task script.
+8. Do not fabricate metrics.
+9. Store raw results and interpretation separately.
+10. Record limitations.
 
 ## Manual work
 
-Người dùng tạo ground truth, thu consent, chạy human rating và xác nhận kết luận.
+User creates ground truth, collects consent, runs human rating and confirms conclusions.

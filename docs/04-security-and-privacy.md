@@ -7,7 +7,7 @@
 - Server-side ownership check.
 - Short-lived access token.
 - Refresh token rotation/revocation.
-- Password hashing bằng thư viện chuẩn.
+- Password hashing using a standard library.
 - Rate limit.
 - Input validation.
 - Output encoding.
@@ -15,7 +15,7 @@
 - Secure headers.
 - CORS allowlist.
 - Audit log.
-- Secret không nằm trong repository.
+- Secrets must not be in the repository.
 
 ## Critical abuse cases
 
@@ -29,34 +29,34 @@
 - Fake point request.
 - File type spoofing.
 - Refresh-token replay.
-- Prompt injection trong transcript.
-- Search index làm lộ private journal.
-- Cache key không chứa user/policy context.
+- Prompt injection via transcript.
+- Search index leaking a private journal.
+- Cache key missing user/policy context.
 
 ## Privacy requirements
 
 - Journal default private.
 - User-controlled sharing.
-- Expiry và revoke.
+- Expiry and revoke.
 - Data export.
 - Account deletion flow.
 - Retention policy.
-- Consent cho AI evaluation.
-- Không log journal body.
-- Không dùng dữ liệu private cho model training.
-- Signed URL cho private media.
+- Consent for AI evaluation.
+- Do not log journal body.
+- Do not use private data for model training.
+- Signed URL for private media.
 
 ## AI safety
 
-- Transcript được coi là untrusted data.
-- Prompt phải tách instruction và source.
-- Không thực thi lệnh từ transcript.
+- Transcript is treated as untrusted data.
+- Prompt must separate instruction and source.
+- Do not execute commands from transcript.
 - Schema validation.
 - Source reference.
 - Human review.
-- Label rõ nội dung AI-generated.
-- Companion không đại diện chuyên gia y tế, pháp lý hoặc tài chính.
+- Clearly label AI-generated content.
+- The companion does not represent a medical, legal or financial expert.
 
 ## Review gate
 
-Mọi PR đụng đến auth, journal, media, search, AI, points hoặc socket phải có security/privacy impact section.
+Every PR that touches auth, journal, media, search, AI, points or socket must include a security/privacy impact section.

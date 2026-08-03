@@ -1,39 +1,39 @@
-# Những phần bắt buộc người thực hiện phải làm thủ công
+# Parts That the Implementer Must Do Manually
 
-Claude hỗ trợ thiết kế và triển khai, nhưng các phần dưới đây không được giao hoàn toàn cho agent.
+Claude assists with design and implementation, but the items below must not be fully delegated to an agent.
 
-## 1. Quyết định sản phẩm
+## 1. Product decisions
 
-Bạn phải tự chốt:
+You must decide:
 
-- MVP thực sự dùng Space Dice hay Spy Cat.
-- Luồng onboarding.
-- Mức độ tùy chỉnh avatar.
+- Whether the MVP uses Space Dice or Spy Cat.
+- The onboarding flow.
+- The degree of avatar customization.
 - Planet rules.
-- Cách tính điểm cuối cùng.
-- Ngôn ngữ giao diện.
-- Tiêu chí “meaningful comment”.
-- Nội dung nào được phép công khai.
+- The final point calculation formula.
+- The interface language.
+- The definition of "meaningful comment".
+- What content is allowed to be public.
 
-## 2. Thiết kế UI/UX và tài sản sáng tạo
+## 2. UI/UX design and creative assets
 
-Bạn phải tự:
+You must:
 
-- duyệt wireframe;
-- chọn visual direction;
-- chọn màu, font và motion;
-- tạo hoặc mua quyền sử dụng asset;
-- kiểm tra license;
-- duyệt avatar layers;
-- duyệt mascot và personality;
-- kiểm tra accessibility bằng mắt và bàn phím;
-- thực hiện usability test với người thật.
+- approve wireframes;
+- choose the visual direction;
+- choose colors, fonts and motion;
+- create or license assets;
+- verify licenses;
+- approve avatar layers;
+- approve mascot and personality;
+- verify accessibility with eyes and keyboard;
+- conduct usability tests with real people.
 
-Claude có thể code giao diện nhưng không thể thay bạn xác nhận bản sắc thương hiệu.
+Claude can code the interface but cannot confirm your brand identity on your behalf.
 
-## 3. Tài khoản, billing và secret
+## 3. Accounts, billing and secrets
 
-Bạn phải tự tạo và quản lý:
+You must create and manage:
 
 - LLM API account.
 - Email provider.
@@ -42,110 +42,110 @@ Bạn phải tự tạo và quản lý:
 - Domain/DNS.
 - Production database.
 - Monitoring account.
-- Budget và quota.
+- Budget and quota.
 
-Không dán secret vào chat hoặc commit. Chỉ điền vào secret manager hoặc `.env` local.
+Do not paste secrets into the chat or commit them. Enter them only in a secret manager or a local `.env` file.
 
-## 4. AI dataset và đánh giá
+## 4. AI dataset and evaluation
 
-Bạn phải tự:
+You must:
 
-- chọn 30–50 video hợp lệ;
-- kiểm tra quyền sử dụng;
-- tạo hoặc duyệt transcript;
-- viết human reference summary;
-- gán key takeaway;
-- gán planet label;
-- thiết kế form chấm;
-- mời người đánh giá;
-- xử lý consent;
-- xác nhận hallucination bằng tay.
+- select 30–50 valid videos;
+- verify usage rights;
+- create or approve transcripts;
+- write human reference summaries;
+- assign key takeaways;
+- assign planet labels;
+- design a scoring form;
+- invite evaluators;
+- handle consent;
+- manually verify hallucinations.
 
-Claude có thể hỗ trợ tạo template và tính metric nhưng không thay thế human ground truth.
+Claude can help create templates and calculate metrics but cannot replace human ground truth.
 
-## 5. Privacy, pháp lý và đạo đức
+## 5. Privacy, legal and ethics
 
-Bạn phải tự duyệt:
+You must review:
 
 - Privacy Policy.
 - Terms of Use.
 - Consent language.
 - Data retention.
 - Account deletion.
-- Nội dung báo cáo/kháng nghị.
+- Report/appeal content.
 - Age restriction.
 - LLM provider data policy.
-- Cách dùng dữ liệu nghiên cứu.
+- How research data is used.
 
-Nên nhờ giảng viên hoặc người có chuyên môn pháp lý xem lại nếu dùng thật.
+Seek review from an instructor or person with legal expertise if used in production.
 
-## 6. Database và production
+## 6. Database and production
 
-Bạn phải tự phê duyệt:
+You must approve:
 
-- destructive migration;
-- data backfill;
-- production migration;
-- database restore;
+- destructive migrations;
+- data backfills;
+- production migrations;
+- database restores;
 - bucket policy;
 - production backup;
 - production access.
 
-Không cho Claude tự chạy production migration.
+Do not allow Claude to run production migrations autonomously.
 
 ## 7. Security
 
-Bạn phải tự:
+You must:
 
-- review plugin trước khi trust;
-- kiểm tra dependency mới;
-- kiểm tra report từ security agent;
-- quyết định mức độ chấp nhận rủi ro;
-- test bằng hai tài khoản;
-- kiểm tra IDOR thủ công;
-- xác nhận log không chứa dữ liệu nhạy cảm;
-- thay key nếu nghi ngờ lộ.
+- review plugins before trusting them;
+- verify new dependencies;
+- review security agent reports;
+- decide acceptable risk levels;
+- test with two accounts;
+- manually check for IDOR;
+- confirm logs do not contain sensitive data;
+- rotate keys if a leak is suspected.
 
-## 8. Git và release
+## 8. Git and release
 
-Bạn phải tự:
+You must:
 
-- duyệt PR;
+- review PRs;
 - merge;
-- tạo release;
-- deploy production;
+- create releases;
+- deploy to production;
 - rollback production;
-- chấp nhận thay đổi scope.
+- accept scope changes.
 
-Không dùng auto-merge cho đồ án.
+Do not use auto-merge for a thesis project.
 
-## 9. Nghiên cứu và thesis
+## 9. Research and thesis
 
-Bạn phải tự:
+You must:
 
-- chọn methodology;
-- xác nhận research question;
-- thu thập dữ liệu;
-- viết phần phân tích;
-- giải thích kết quả;
-- thừa nhận limitation;
-- tránh đưa kết luận vượt quá dữ liệu;
-- chuẩn bị demo và trả lời hội đồng.
+- choose the methodology;
+- confirm research questions;
+- collect data;
+- write the analysis section;
+- interpret results;
+- acknowledge limitations;
+- avoid conclusions that exceed the data;
+- prepare the demo and answer the committee.
 
-Claude có thể soạn nháp nhưng bạn phải hiểu và chịu trách nhiệm toàn bộ nội dung.
+Claude can draft text, but you must understand and take full responsibility for all content.
 
 ## 10. Human approval gates
 
-Bắt buộc phê duyệt trước:
+Mandatory approval before:
 
-- kết thúc phase 00;
-- schema và permission model;
+- end of phase 00;
+- schema and permission model;
 - LLM provider;
 - transcript source;
-- migration có dữ liệu;
+- migration with data;
 - UI direction;
 - score formula;
-- security finding mức high/critical;
+- high/critical security findings;
 - staging deployment;
 - production deployment;
 - final thesis result.

@@ -2,28 +2,28 @@
 
 ## Feature DoD
 
-- Requirement và out-of-scope rõ.
-- Acceptance criteria có thể kiểm tra.
-- Contract/schema đã chốt.
-- Implementation không vi phạm domain boundary.
-- Unit test cho business rule.
-- Integration test cho adapter/data.
-- Negative authorization test nếu có dữ liệu.
-- Loading, empty, error và retry state ở UI.
-- Accessibility cơ bản.
-- Logging không chứa secret/private body.
-- Docs cập nhật.
-- Evidence lưu.
-- Không có lint/type/build error.
-- Human approval khi thuộc gate.
+- Requirement and out-of-scope are clear.
+- Acceptance criteria are verifiable.
+- Contract/schema is finalized.
+- Implementation does not violate domain boundaries.
+- Unit tests for business rules.
+- Integration tests for adapters/data.
+- Negative authorization test where data is involved.
+- Loading, empty, error and retry states in the UI.
+- Basic accessibility.
+- Logging contains no secrets or private body content.
+- Docs updated.
+- Evidence stored.
+- No lint/type/build errors.
+- Human approval when the item is a gate.
 
 ## Phase DoD
 
-- Tất cả deliverable tồn tại.
-- Quality gate pass.
-- Reviewer agent đã chạy.
-- Issue critical/high được xử lý hoặc người dùng chấp nhận bằng văn bản.
-- `PROJECT_STATUS.md` cập nhật.
-- ADR cập nhật.
-- Manual work queue cập nhật.
-- Có next prompt.
+- All deliverables exist.
+- Quality gate passes.
+- Reviewer agent has run.
+- Critical/high issues are resolved or accepted by the user in writing.
+- `PROJECT_STATUS.md` updated.
+- ADR updated.
+- Manual work queue updated.
+- Next prompt exists.

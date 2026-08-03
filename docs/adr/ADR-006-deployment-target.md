@@ -19,6 +19,7 @@ Docker Compose for local development and thesis demonstration.
 - Staging deployment documentation may be prepared in Phase 11, but no actual deployment without human approval.
 
 Explicitly prohibited without human approval:
+
 - Production deployment.
 - VPS purchase or paid cloud resource creation.
 - DNS changes.

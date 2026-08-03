@@ -1,0 +1,2 @@
+- [Phase 01 NestJS scaffold](project_phase01_nestjs_scaffold.md) — apps/api + apps/worker scaffolded with NestJS 11, vitest+SWC; version fixes applied
+- [pnpm 11 build script approval](feedback_pnpm11_builds.md) — run `pnpm approve-builds --all` after install; @swc/core needs its native binary postinstall

@@ -1,0 +1,1 @@
+- [Phase 01 database package bootstrap](project_phase01_database_bootstrap.md) — packages/database skeleton created; key decisions on __dirname vs import.meta, .mjs ESLint config, no models yet

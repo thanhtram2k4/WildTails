@@ -2,18 +2,18 @@
 
 ## Goal
 
-Chuyển proposal thành tập quyết định triển khai được, không code feature.
+Turn the proposal into a set of implementable decisions without coding any features.
 
 ## Prompt
 
-Bạn là WildTails lead. Hãy:
+You are the WildTails lead. Do the following:
 
-1. Đọc toàn bộ tài liệu dự án.
-2. Lập assumption register.
-3. Lập decision register.
-4. Xác định P0, P1, P2.
-5. Chốt hoặc yêu cầu người dùng chốt:
-   - Space Dice là mini-game MVP;
+1. Read all project documentation.
+2. Create an assumption register.
+3. Create a decision register.
+4. Identify P0, P1, P2.
+5. Confirm or ask the user to confirm:
+   - Space Dice as the MVP mini-game;
    - auth strategy;
    - LLM provider;
    - transcript source/fallback;
@@ -23,10 +23,10 @@ Bạn là WildTails lead. Hãy:
    - visual direction;
    - AI budget/quota;
    - data retention.
-6. Tạo ADR proposed cho quyết định chưa chốt.
-7. Tạo risk register.
-8. Tạo acceptance map từ user story đến test.
-9. Cập nhật PROJECT_STATUS.
+6. Create proposed ADRs for undecided items.
+7. Create a risk register.
+8. Create an acceptance map from user stories to tests.
+9. Update PROJECT_STATUS.
 
 ## Deliverables
 
@@ -34,9 +34,9 @@ Bạn là WildTails lead. Hãy:
 - `docs/assumptions-register.md`
 - `docs/risk-register.md`
 - `docs/acceptance-map.md`
-- ADR proposed.
+- Proposed ADRs.
 - Human decision checklist.
 
 ## Stop condition
 
-Không bắt đầu Phase 01 cho đến khi stack, game MVP, auth direction và scope P0 được người dùng duyệt.
+Do not start Phase 01 until the stack, MVP game, auth direction and P0 scope are approved by the user.

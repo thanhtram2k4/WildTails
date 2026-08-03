@@ -1,0 +1,1 @@
+- [Phase 01 web scaffold decisions](project_phase01_web_scaffold.md) — Tailwind 4 setup, @types/node ^24, ESLint .mjs, no test scripts in Phase 01, port 3100

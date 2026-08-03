@@ -1,0 +1,1 @@
+- [Phase 01 patterns](feedback_phase01_patterns.md) — ESLint config deps, Prisma 7 URL, SWC CLI, vitest dist exclusion, Next.js 16 flat config
