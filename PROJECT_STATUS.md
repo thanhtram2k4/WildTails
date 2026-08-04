@@ -3,28 +3,28 @@
 ## Current phase
 
 - Phase: 03
-- Status: READY_FOR_REVIEW
+- Status: DONE
 - Active branch: phase/03-identity-and-planets
-- Last verified commit: ea731a7
+- Last verified commit: b3852c9
 - Updated at: 2026-08-04
 
 ## Phase checklist
 
-| Phase | Name                           | Status           | Human approval      |
-| ----- | ------------------------------ | ---------------- | ------------------- |
-| 00    | Project audit and decisions    | DONE             | Approved 2026-07-31 |
-| 01    | Repository bootstrap           | DONE             | Approved 2026-08-03 |
-| 02    | Architecture and contracts     | DONE             | Approved 2026-08-04 |
-| 03    | Identity and planets           | READY_FOR_REVIEW | Required            |
-| 04    | Captain's Cabin and goals      | NOT_STARTED      | Required            |
-| 05    | Planet Feed and moderation     | NOT_STARTED      | Required            |
-| 06    | AI Auto-Log                    | NOT_STARTED      | Required            |
-| 07    | Gamification                   | NOT_STARTED      | Required            |
-| 08    | Real-time Space Dice           | NOT_STARTED      | Required            |
-| 09    | Security hardening             | NOT_STARTED      | Required            |
-| 10    | Testing and evaluation         | NOT_STARTED      | Required            |
-| 11    | DevOps and observability       | NOT_STARTED      | Required            |
-| 12    | Final demo and thesis evidence | NOT_STARTED      | Required            |
+| Phase | Name                           | Status      | Human approval      |
+| ----- | ------------------------------ | ----------- | ------------------- |
+| 00    | Project audit and decisions    | DONE        | Approved 2026-07-31 |
+| 01    | Repository bootstrap           | DONE        | Approved 2026-08-03 |
+| 02    | Architecture and contracts     | DONE        | Approved 2026-08-04 |
+| 03    | Identity and planets           | DONE        | Approved 2026-08-04 |
+| 04    | Captain's Cabin and goals      | NOT_STARTED | Required            |
+| 05    | Planet Feed and moderation     | NOT_STARTED | Required            |
+| 06    | AI Auto-Log                    | NOT_STARTED | Required            |
+| 07    | Gamification                   | NOT_STARTED | Required            |
+| 08    | Real-time Space Dice           | NOT_STARTED | Required            |
+| 09    | Security hardening             | NOT_STARTED | Required            |
+| 10    | Testing and evaluation         | NOT_STARTED | Required            |
+| 11    | DevOps and observability       | NOT_STARTED | Required            |
+| 12    | Final demo and thesis evidence | NOT_STARTED | Required            |
 
 Valid statuses:
 
@@ -121,9 +121,7 @@ Phase 02 – Architecture and Contracts (2026-08-04):
 - No NotificationResponse Zod schema (deferred to Phase 05)
 - Next.js 16 build uses --webpack flag due to Turbopack .js→.ts extension resolution (LOW)
 - Planet descriptions are temporary product copy pending content approval (LOW)
-- Avatar visual assets are placeholder SVG — requires human visual approval (BLOCKED on approval)
-- E2E Playwright tests written but require browser install to run (LOW)
-- Concurrent refresh integration test needs live DB (covered by unit test + live manual test)
+- Avatar visual assets are placeholder SVG — approved for MVP (2026-08-04)
 
 ## Manual work queue
 
