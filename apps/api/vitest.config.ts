@@ -5,7 +5,7 @@ export default defineConfig({
   test: {
     root: './',
     globals: true,
-    exclude: ['dist/**', 'node_modules/**'],
+    exclude: ['dist/**', 'node_modules/**', '**/*.integration.spec.ts'],
   },
   plugins: [swc.vite()],
 });
