@@ -23,6 +23,7 @@
 - New members may post if the planet rule allows it.
 - A moderator may only act on the planet they are assigned to.
 - Admin actions must be audited.
+- Rejoin after leave (D15): reactivate the existing membership row. Set leftAt to null, reset role to MEMBER (unless admin assigns another), set joinedAt to now. Do not create a duplicate row. Record leave and rejoin events in AuditLog.
 
 ## Feed
 

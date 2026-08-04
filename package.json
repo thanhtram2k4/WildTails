@@ -12,16 +12,18 @@
     "format": "prettier --write .",
     "typecheck": "pnpm -r run typecheck",
     "test": "pnpm -r run test",
-    "build": "pnpm -r run build"
+    "build": "pnpm -r run build",
+    "openapi:lint": "redocly lint docs/api/openapi.yaml --format stylish"
   },
   "devDependencies": {
-    "typescript": "^5.9.3",
-    "prettier": "^3.9.6",
+    "@redocly/cli": "1.34.3",
+    "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^9.30.1",
-    "typescript-eslint": "^8.65.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.8.0",
-    "vitest": "^4.1.10",
-    "@vitest/coverage-v8": "^4.1.10"
+    "prettier": "^3.9.6",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.65.0",
+    "vitest": "^4.1.10"
   }
 }

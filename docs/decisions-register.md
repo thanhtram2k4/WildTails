@@ -18,6 +18,9 @@ Updated: 2026-07-31
 | D10 | Data retention and deletion   | Soft delete with 30-day retention before purge. Retention policy must be reviewed before any real deployment. No automatic production data deletion without human approval                                     | -       | 2026-07-31 |
 | D11 | AI evaluation dataset consent | Public videos and non-sensitive data only. No private journals. Participants must be informed, consent, and have data anonymized. University/supervisor/institutional requirements take priority               | -       | 2026-07-31 |
 | D12 | Project language              | English for everything: UI, docs, user stories, acceptance criteria, source code, variables, classes, API endpoints, database entities, error messages, test descriptions, technical reports                   | -       | 2026-07-31 |
+| D13 | Logout request body           | POST /auth/logout requires access token auth AND a request body `{ refreshToken }`. Server revokes the presented refresh token. Replay follows ADR-002 family rules                                            | ADR-002 | 2026-08-04 |
+| D14 | AI job cancel response code   | POST /ai/jobs/{id}/cancel returns 202 Accepted. Cancellation is asynchronous; job may reach CANCELLED or COMPLETED                                                                                             | ADR-004 | 2026-08-04 |
+| D15 | Planet membership rejoin      | Rejoin reactivates existing row: set leftAt=null, role=MEMBER (unless admin assigns), joinedAt=now(). No duplicate row. Leave/rejoin history via AuditLog                                                      | -       | 2026-08-04 |
 
 ## Approved decisions (from documentation)
 

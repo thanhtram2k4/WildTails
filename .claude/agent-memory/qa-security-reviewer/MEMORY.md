@@ -1,1 +1,2 @@
 - [Phase 01 QA Review Findings](project_phase01_qa_review.md) — Pass/fail verdicts and open findings from Phase 01 (Repository Bootstrap) independent security review
+- [Phase 02 QA Review Findings](project_phase02_qa_review.md) — PASS_WITH_NOTES; 3 HIGH blockers, 4 MEDIUM, 6 LOW/INFO; Phase 02 contracts and schema design review
