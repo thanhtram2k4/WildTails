@@ -1,3 +1,3 @@
-// @wildtails/database
-// PrismaClient instantiation and repository infrastructure will be added in later phases.
-export {};
+export { createPrismaClient } from './client.js';
+export { PrismaClient } from '@prisma/client';
+export * from '@prisma/client';

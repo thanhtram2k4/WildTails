@@ -115,16 +115,18 @@ enum ReportStatus {
 // IDENTITY DOMAIN
 // =============================================================================
 
-/// Core user record. Passwords are stored as bcrypt hashes — never the raw value.
+/// Core user record. Passwords are stored as argon2id hashes — never the raw value.
 /// Soft delete via deletedAt; purge after 30-day retention window (D10).
 model User {
   id              String    @id @default(uuid())
   email           String    @unique
-  /// bcrypt hash. Do not log or expose.
+  /// argon2id hash. Do not log or expose.
   passwordHash    String
   displayName     String
   bio             String?
   avatarUrl       String?
+  /// Layered avatar configuration. Validated against AvatarConfigSchema at service layer.
+  avatarConfig    Json?
   role            UserRole  @default(USER)
   isActive        Boolean   @default(true)
   emailVerifiedAt DateTime?
