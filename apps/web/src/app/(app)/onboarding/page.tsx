@@ -71,10 +71,10 @@ function Stepper({ current }: { current: Step }) {
                   className={[
                     'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold',
                     done
-                      ? 'bg-amber-500 text-zinc-900'
+                      ? 'bg-[#0d9488] text-white'
                       : active
-                        ? 'border-2 border-amber-500 text-amber-400'
-                        : 'border-2 border-zinc-600 text-zinc-600',
+                        ? 'border-2 border-[#0d9488] text-[#0d9488]'
+                        : 'border-2 border-slate-300 text-slate-400',
                   ].join(' ')}
                   aria-current={active ? 'step' : undefined}
                 >
@@ -94,7 +94,7 @@ function Stepper({ current }: { current: Step }) {
                 <span
                   className={[
                     'hidden text-xs font-medium sm:block',
-                    active ? 'text-zinc-100' : 'text-zinc-500',
+                    active ? 'text-[#1e3a5f]' : 'text-slate-400',
                   ].join(' ')}
                 >
                   {STEP_LABELS[step]}
@@ -102,7 +102,7 @@ function Stepper({ current }: { current: Step }) {
               </span>
               {i < STEPS.length - 1 ? (
                 <span
-                  className={['mx-2 h-px flex-1', done ? 'bg-amber-500' : 'bg-zinc-700'].join(' ')}
+                  className={['mx-2 h-px flex-1', done ? 'bg-[#0d9488]' : 'bg-slate-200'].join(' ')}
                   aria-hidden="true"
                 />
               ) : null}
@@ -257,8 +257,10 @@ export default function OnboardingPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="mb-2 text-2xl font-bold text-zinc-100">Set up your profile</h1>
-      <p className="mb-8 text-sm text-zinc-400">
+      <h1 className="mb-2 text-2xl font-bold" style={{ color: 'var(--wt-navy)' }}>
+        Set up your profile
+      </h1>
+      <p className="mb-8 text-sm" style={{ color: 'var(--wt-text-muted)' }}>
         Step {STEPS.indexOf(step) + 1} of {STEPS.length}
       </p>
 
@@ -267,7 +269,9 @@ export default function OnboardingPage() {
       {/* Step: Profile */}
       {step === 'profile' ? (
         <form onSubmit={handleProfileNext} noValidate className="flex flex-col gap-6">
-          <h2 className="text-lg font-semibold text-zinc-200">Your profile</h2>
+          <h2 className="text-lg font-semibold" style={{ color: 'var(--wt-navy)' }}>
+            Your profile
+          </h2>
 
           <FormField
             id="ob-displayName"
@@ -297,10 +301,12 @@ export default function OnboardingPage() {
               maxLength={500}
               rows={3}
               placeholder="Tell the universe about yourself..."
-              className="block w-full resize-none rounded-lg border border-zinc-600 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 transition-colors focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
+              className="block w-full resize-none rounded-lg border border-[#e2e8f0] bg-white px-3 py-2 text-sm text-[#1e3a5f] placeholder-slate-400 transition-colors focus:border-[#0d9488] focus:outline-none focus:ring-2 focus:ring-[#0d9488] focus:ring-offset-2 focus:ring-offset-white disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-50"
               aria-describedby="ob-bio-hint"
             />
-            <p className="mt-1 text-right text-xs text-zinc-600">{bio.length}/500</p>
+            <p className="mt-1 text-right text-xs" style={{ color: 'var(--wt-text-muted)' }}>
+              {bio.length}/500
+            </p>
           </FormField>
 
           <div className="flex justify-end">
@@ -314,16 +320,21 @@ export default function OnboardingPage() {
       {/* Step: Avatar */}
       {step === 'avatar' ? (
         <div className="flex flex-col gap-6">
-          <h2 className="text-lg font-semibold text-zinc-200">Build your avatar</h2>
+          <h2 className="text-lg font-semibold" style={{ color: 'var(--wt-navy)' }}>
+            Build your avatar
+          </h2>
 
           <div className="flex flex-col gap-6 sm:flex-row">
             {/* Preview */}
             <div className="flex flex-col items-center gap-3 sm:sticky sm:top-4 sm:self-start">
-              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+              <p
+                className="text-xs font-semibold uppercase tracking-wider"
+                style={{ color: 'var(--wt-text-muted)' }}
+              >
                 Preview
               </p>
               <AvatarPreview config={avatarConfig} size={120} />
-              <p className="text-center text-xs text-zinc-500">
+              <p className="text-center text-xs" style={{ color: 'var(--wt-text-muted)' }}>
                 Placeholder art — design approval pending
               </p>
             </div>
@@ -349,11 +360,15 @@ export default function OnboardingPage() {
       {step === 'planets' ? (
         <div className="flex flex-col gap-6">
           <div>
-            <h2 className="text-lg font-semibold text-zinc-200">Choose your planets</h2>
-            <p className="mt-1 text-sm text-zinc-400">
+            <h2 className="text-lg font-semibold" style={{ color: 'var(--wt-navy)' }}>
+              Choose your planets
+            </h2>
+            <p className="mt-1 text-sm" style={{ color: 'var(--wt-text-muted)' }}>
               Select the planets you want to join. You can change this later.
               {selectedPlanets.size > 0 ? (
-                <span className="ml-1 text-amber-400">{selectedPlanets.size} selected</span>
+                <span className="ml-1 font-medium" style={{ color: 'var(--wt-teal)' }}>
+                  {selectedPlanets.size} selected
+                </span>
               ) : null}
             </p>
           </div>
@@ -361,7 +376,7 @@ export default function OnboardingPage() {
           {submitError ? (
             <div
               role="alert"
-              className="rounded-lg border border-red-700 bg-red-900/30 px-4 py-3 text-sm text-red-300"
+              className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700"
             >
               {submitError}
             </div>
@@ -374,13 +389,13 @@ export default function OnboardingPage() {
               aria-label="Loading planets"
             >
               <span
-                className="motion-safe:animate-spin h-8 w-8 rounded-full border-4 border-zinc-600 border-t-amber-500"
+                className="motion-safe:animate-spin h-8 w-8 rounded-full border-4 border-slate-200 border-t-[#0d9488]"
                 aria-hidden="true"
               />
             </div>
           ) : planetsError ? (
             <div className="flex flex-col items-center gap-3 py-8 text-center">
-              <p className="text-sm text-red-400">{planetsError}</p>
+              <p className="text-sm text-red-600">{planetsError}</p>
               <Button variant="secondary" size="sm" onClick={() => setPlanetsRetry((n) => n + 1)}>
                 Retry
               </Button>
@@ -435,8 +450,10 @@ function PlanetCard({
     <label
       className={[
         'flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors',
-        'focus-within:ring-2 focus-within:ring-amber-500 focus-within:ring-offset-2 focus-within:ring-offset-zinc-900',
-        selected ? 'border-amber-500 bg-amber-500/10' : 'border-zinc-700 hover:border-zinc-500',
+        'focus-within:ring-2 focus-within:ring-[#0d9488] focus-within:ring-offset-2 focus-within:ring-offset-white',
+        selected
+          ? 'border-[#0d9488] bg-teal-50'
+          : 'border-[#e2e8f0] bg-white hover:border-slate-300',
       ].join(' ')}
     >
       <input
@@ -453,18 +470,20 @@ function PlanetCard({
         <p
           className={[
             'font-semibold capitalize',
-            selected ? 'text-amber-300' : 'text-zinc-200',
+            selected ? 'text-[#0d9488]' : 'text-[#1e3a5f]',
           ].join(' ')}
         >
           {planet.name}
         </p>
-        <p className="mt-0.5 line-clamp-2 text-xs text-zinc-500">{description}</p>
-        <p className="mt-1 text-xs text-zinc-600">{planet.memberCount.toLocaleString()} members</p>
+        <p className="mt-0.5 line-clamp-2 text-xs" style={{ color: 'var(--wt-text-muted)' }}>
+          {description}
+        </p>
+        <p className="mt-1 text-xs text-slate-400">{planet.memberCount.toLocaleString()} members</p>
       </div>
       <span
         className={[
           'mt-0.5 h-4 w-4 shrink-0 rounded border-2 transition-colors',
-          selected ? 'border-amber-500 bg-amber-500' : 'border-zinc-600',
+          selected ? 'border-[#0d9488] bg-[#0d9488]' : 'border-slate-300',
         ].join(' ')}
         aria-hidden="true"
       />
@@ -478,13 +497,17 @@ function StaticPlanetCard({ slug }: { slug: string }) {
   const name = slug.charAt(0).toUpperCase() + slug.slice(1);
 
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-zinc-700 p-4 opacity-60">
+    <div className="flex items-start gap-3 rounded-xl border border-[#e2e8f0] bg-white p-4 opacity-60">
       <span className="text-2xl" aria-hidden="true">
         {icon}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="font-semibold capitalize text-zinc-200">{name}</p>
-        <p className="mt-0.5 line-clamp-2 text-xs text-zinc-500">{description}</p>
+        <p className="font-semibold capitalize" style={{ color: 'var(--wt-navy)' }}>
+          {name}
+        </p>
+        <p className="mt-0.5 line-clamp-2 text-xs" style={{ color: 'var(--wt-text-muted)' }}>
+          {description}
+        </p>
       </div>
     </div>
   );

@@ -10,7 +10,7 @@ interface AvatarPreviewProps {
 
 /** Background colors per option */
 const BG_COLORS: Record<string, string> = {
-  none: '#18181b',
+  none: '#e2e8f0', // light slate — visible on both light and dark surfaces
   stars: '#0f0f2e',
   planets: '#1a0a2e',
   nebula: '#1a0020',
@@ -69,7 +69,7 @@ const ACCESSORY_COLORS: Record<string, string | null> = {
  * Placeholder art — visual sign-off required from design.
  */
 export function AvatarPreview({ config, size = 80, className = '' }: AvatarPreviewProps) {
-  const bgColor = BG_COLORS[config.background] ?? '#18181b';
+  const bgColor = BG_COLORS[config.background] ?? '#e2e8f0';
   const furColor = FUR_COLORS[config.fur] ?? '#a1a1aa';
   const eyePath = EYE_SHAPES[config.eyes] ?? EYE_SHAPES['round'];
   const basePath = BASE_PATHS[config.base] ?? BASE_PATHS['cat-round'];

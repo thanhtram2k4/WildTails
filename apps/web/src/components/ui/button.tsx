@@ -12,13 +12,16 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
+  // Yellow/amber primary — navy text for WCAG AA contrast on amber-400
   primary:
-    'bg-amber-500 text-white hover:bg-amber-600 focus-visible:ring-amber-500 disabled:bg-amber-300',
+    'bg-amber-400 text-[#1e3a5f] hover:bg-amber-500 focus-visible:ring-amber-400 disabled:bg-amber-200 disabled:text-amber-600',
+  // Teal outline secondary
   secondary:
-    'bg-zinc-700 text-zinc-100 hover:bg-zinc-600 focus-visible:ring-zinc-500 disabled:bg-zinc-800 disabled:text-zinc-500',
+    'border border-[#0d9488] text-[#0d9488] bg-white hover:bg-teal-50 focus-visible:ring-[#0d9488] disabled:border-teal-200 disabled:text-teal-300',
+  // Ghost — teal text, subtle hover
   ghost:
-    'bg-transparent text-amber-400 hover:bg-zinc-800 focus-visible:ring-amber-500 disabled:text-zinc-600',
-  danger: 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500 disabled:bg-red-400',
+    'bg-transparent text-[#0d9488] hover:bg-teal-50 focus-visible:ring-[#0d9488] disabled:text-teal-200',
+  danger: 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500 disabled:bg-red-300',
 };
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {
@@ -50,7 +53,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={[
           'inline-flex items-center justify-center gap-2 rounded-lg font-medium',
           'transition-colors duration-150',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white',
           'disabled:cursor-not-allowed',
           VARIANT_CLASSES[variant],
           SIZE_CLASSES[size],

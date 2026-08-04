@@ -13,6 +13,7 @@ import {
   ARGON2_OPTIONS,
   ACCESS_TOKEN_EXPIRES_IN_SECONDS,
   REFRESH_TOKEN_EXPIRES_IN_DAYS,
+  REFRESH_ROTATION_GRACE_MS,
 } from './auth.constants';
 import type {
   RegisterRequest,
@@ -109,6 +110,16 @@ export class AuthService {
 
   // ---------------------------------------------------------------------------
   // refresh — atomic rotation with replay detection
+  //
+  // Strategy: replacedAt grace interval (REFRESH_ROTATION_GRACE_MS).
+  //
+  // When a token has already been rotated (replacedByTokenId is set):
+  //   - If replacedAt is within the grace interval → LOST_RACE (no revocation)
+  //   - If replacedAt is beyond the grace interval → REPLAY (revoke family)
+  //
+  // This deterministically distinguishes a concurrent in-flight request from
+  // a genuine later replay, even when the loser reads the DB after the
+  // winner's transaction has committed.
   // ---------------------------------------------------------------------------
 
   async refresh(dto: RefreshRequest): Promise<LoginResponse> {
@@ -133,6 +144,8 @@ export class AuthService {
             revokedAt: true,
             expiresAt: true,
             replacedByTokenId: true,
+            replacedAt: true,
+            createdAt: true,
             family: true,
           },
         });
@@ -141,10 +154,19 @@ export class AuthService {
         if (existing.revokedAt !== null) return { outcome: 'INVALID' };
         if (existing.expiresAt < now) return { outcome: 'INVALID' };
 
-        // Replay detection: if the token was ALREADY rotated before this
-        // request arrived, this is a genuine replay of a consumed token.
-        // Revoke the entire family and return REPLAY (commits before 401).
+        // Token was already rotated — check the grace interval.
         if (existing.replacedByTokenId !== null) {
+          const replacedAt = existing.replacedAt ?? existing.createdAt;
+          const elapsed = now.getTime() - replacedAt.getTime();
+
+          if (elapsed <= REFRESH_ROTATION_GRACE_MS) {
+            // Within the concurrency grace window — treat as a lost race.
+            // Do NOT revoke the family.
+            return { outcome: 'LOST_RACE' };
+          }
+
+          // Beyond the grace window — genuine replay. Revoke the entire
+          // family inside the transaction so it commits before we return 401.
           await tx.refreshToken.updateMany({
             where: { family: existing.family },
             data: { revokedAt: now },
@@ -153,8 +175,6 @@ export class AuthService {
         }
 
         // Normal rotation — conditional update guards against concurrent races.
-        // The WHERE clause (replacedByTokenId IS NULL) ensures only one
-        // concurrent request succeeds. The loser sees count=0.
         const newRawToken = randomBytes(32).toString('base64url');
         const newTokenHash = sha256(newRawToken);
         const newTokenId = randomUUID();
@@ -165,12 +185,14 @@ export class AuthService {
             revokedAt: null,
             replacedByTokenId: null,
           },
-          data: { replacedByTokenId: newTokenId },
+          data: {
+            replacedByTokenId: newTokenId,
+            replacedAt: now,
+          },
         });
 
         if (updated.count === 0) {
-          // Lost the race — another concurrent request rotated first.
-          // Do NOT revoke the family: this is a race, not a confirmed replay.
+          // Lost the race via row-level lock — another request rotated first.
           return { outcome: 'LOST_RACE' };
         }
 
@@ -188,7 +210,6 @@ export class AuthService {
         return { outcome: 'SUCCESS', userId: existing.userId, newRawToken };
       });
     } catch (err: unknown) {
-      // Prisma P2034 — serialization failure (concurrent transaction conflict)
       if (err instanceof Error && 'code' in err && (err as { code?: string }).code === 'P2034') {
         throw new UnauthorizedException('Token rotation conflict');
       }

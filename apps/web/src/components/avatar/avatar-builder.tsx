@@ -56,7 +56,12 @@ function LayerRow({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">{spec.label}</p>
+      <p
+        className="text-xs font-semibold uppercase tracking-wider"
+        style={{ color: 'var(--wt-text-muted)' }}
+      >
+        {spec.label}
+      </p>
       <div role="radiogroup" aria-label={spec.label} className="flex flex-wrap gap-2">
         {spec.options.map((option) => {
           const selected = option === currentValue;
@@ -67,10 +72,10 @@ function LayerRow({
               className={[
                 'relative flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm',
                 'transition-colors duration-100',
-                'focus-within:ring-2 focus-within:ring-amber-500 focus-within:ring-offset-2 focus-within:ring-offset-zinc-900',
+                'focus-within:ring-2 focus-within:ring-[#0d9488] focus-within:ring-offset-2 focus-within:ring-offset-white',
                 selected
-                  ? 'border-amber-500 bg-amber-500/10 text-amber-300'
-                  : 'border-zinc-600 text-zinc-400 hover:border-zinc-400 hover:text-zinc-200',
+                  ? 'border-[#0d9488] bg-teal-50 text-[#0d9488]'
+                  : 'border-[#e2e8f0] text-[#1e3a5f] hover:border-slate-400',
               ].join(' ')}
             >
               <input
@@ -83,7 +88,7 @@ function LayerRow({
               />
               {swatch ? (
                 <span
-                  className="h-3 w-3 rounded-full border border-zinc-600"
+                  className="h-3 w-3 rounded-full border border-slate-200"
                   style={{ background: swatch }}
                   aria-hidden="true"
                 />

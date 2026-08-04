@@ -106,14 +106,18 @@ export default function LoginPage() {
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
       <div>
-        <h1 className="text-xl font-bold text-zinc-100">Welcome back</h1>
-        <p className="mt-1 text-sm text-zinc-400">Sign in to your account</p>
+        <h1 className="text-xl font-bold" style={{ color: 'var(--wt-navy)' }}>
+          Welcome back
+        </h1>
+        <p className="mt-1 text-sm" style={{ color: 'var(--wt-text-muted)' }}>
+          Sign in to your account
+        </p>
       </div>
 
       {serverError ? (
         <div
           role="alert"
-          className="rounded-lg border border-red-700 bg-red-900/30 px-4 py-3 text-sm text-red-300"
+          className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700"
         >
           {serverError}
         </div>
@@ -153,11 +157,12 @@ export default function LoginPage() {
         Sign in
       </Button>
 
-      <p className="text-center text-sm text-zinc-500">
+      <p className="text-center text-sm" style={{ color: 'var(--wt-text-muted)' }}>
         No account?{' '}
         <Link
           href="/register"
-          className="text-amber-400 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded"
+          className="underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 rounded"
+          style={{ color: 'var(--wt-teal)' }}
         >
           Create one
         </Link>

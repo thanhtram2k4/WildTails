@@ -203,6 +203,10 @@ model RefreshToken {
   revokedAt DateTime?
   /// Points to the successor token when this one has been rotated out.
   replacedByTokenId String?
+  /// Timestamp when this token was rotated out. Used to distinguish a
+  /// concurrent in-flight refresh (within the grace interval) from a
+  /// genuine later replay. See REFRESH_ROTATION_GRACE_MS in auth.constants.
+  replacedAt        DateTime?
   createdAt         DateTime @default(now())
 
   @@index([tokenHash])

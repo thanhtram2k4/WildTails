@@ -5,7 +5,7 @@
 - Phase: 03
 - Status: READY_FOR_REVIEW
 - Active branch: phase/03-identity-and-planets
-- Last verified commit: 0881c68
+- Last verified commit: (pending — final verification commit)
 - Updated at: 2026-08-04
 
 ## Phase checklist
@@ -65,7 +65,7 @@ Phase 03 – Identity and Planets (2026-08-04):
 - Lint: 9 packages pass ESLint (0 errors)
 - Format: all files pass Prettier
 - Typecheck: 9 packages pass tsc --noEmit (strict mode, 0 errors)
-- Tests: 83 total across 11 files, all pass
+- Tests: 95 total across 12 files, all pass
   - contracts.spec: 13 tests
   - worker.spec: 1 test
   - health.controller.spec: 1 test
@@ -74,28 +74,27 @@ Phase 03 – Identity and Planets (2026-08-04):
   - auth.service.spec: 11 tests (register, login, refresh rotation, logout)
   - user.service.spec: 8 tests (profile, avatar config, cross-account denial)
   - planet.service.spec: 13 tests (list, join, leave, rejoin D15, cross-user)
-  - auth.integration.spec: 7 tests (PostgreSQL-backed: concurrent refresh, replay, family revocation)
-  - auth.spec (Playwright): 11 E2E tests (login, register, CSRF, accessibility)
+  - auth.integration.spec: 12 tests (DB-backed: concurrent refresh with grace interval,
+    DB row verification, winner successor validity, genuine replay after 11s wait,
+    DB family revocation query, committed revocation proof)
+  - auth.spec (Playwright): 11 E2E tests (login, register, CSRF header, accessibility)
+  - onboarding-live.spec (Playwright): 7 live E2E tests (real register, login, cookie, CSRF)
   - screenshots.spec (Playwright): 4 screenshot captures
-- Prisma: schema valid, client generated (v7.9.1), migration applied
-- Migration: 20260804144914_phase03_init (31 tables, 10 enums, 859 lines SQL)
+- Prisma: schema valid, client generated (v7.9.1), 2 migrations applied
+- Migrations: phase03_init (31 tables, 10 enums, 859 lines) + add_replaced_at (1 column)
 - Seed: 8 default planets, idempotent (ran twice, count asserted via psql)
 - Build: API (SWC 30 files), Web (webpack, 13 routes), Worker (SWC)
 - OpenAPI: valid (0 errors, 5 warnings)
-- Secrets: 172 files scanned, 21 false positives (test fixtures), no real secrets
-- Zod: only 4.4.3 across all packages (3 workspace packages)
+- Secrets: 172+ files scanned, false positives reviewed, no real secrets
+- Zod: only 4.4.3 across all packages
 - Framework independence: no @nestjs imports in packages/database/src/
 - NestJS routes: /auth/_, /users/_, /planets/*, /health (no /api prefix)
-- Live API tested: register, login, wrong password, planets, join/leave/rejoin
-- Concurrent refresh: exactly 1 of 2 requests succeeds, family revocation committed
-- Replay detection: consumed token → 401, successor rejected, new login works
-- Security: argon2id hashing, SHA-256 token hashes, atomic refresh rotation,
-  replay detection with committed family revocation, default-deny JWT guard,
-  mandatory RolesGuard, no passwords/tokens in logs
-- Cookie: HttpOnly refresh cookie scoped to /api/auth, CSRF double-submit
-- Playwright: v1.50.x, Chromium v1234, 15 tests (11 auth + 4 screenshot)
-- Enum reconciliation: 10 Prisma = 10 PostgreSQL types (Phase 02 "14" included Zod-only)
-- Visual evidence: 6 screenshots in docs/evidence/phase-03/onboarding-screenshots/
+- Concurrent refresh: 1 success + 1 failure, DB verified 0 revoked rows, winner valid
+- Genuine replay after 11s grace: 401, DB verified entire family revoked
+- Runtime health: Web (3100), API (3000), Worker (3001) all healthy
+- D09 visual direction: light theme, navy/teal/yellow palette, cat SVG identity
+- Screenshots: 6 captured from running application (D09 theme visible)
+- Cookie: HttpOnly wildtails_refresh on /api/auth, CSRF double-submit verified
 - Evidence: docs/evidence/phase-03/
 
 Phase 02 – Architecture and Contracts (2026-08-04):

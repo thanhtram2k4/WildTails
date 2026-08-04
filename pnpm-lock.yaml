@@ -105,9 +105,15 @@ importers:
       '@types/passport-jwt':
         specifier: ^4.0.1
         version: 4.0.1
+      '@types/pg':
+        specifier: ^8.20.3
+        version: 8.20.3
       '@wildtails/config':
         specifier: workspace:*
         version: link:../../packages/config
+      pg:
+        specifier: ^8.22.0
+        version: 8.22.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3

@@ -161,7 +161,7 @@ test('capture onboarding — profile, avatar, planets', async ({ page }) => {
   });
 
   // Click next to avatar builder (step 2)
-  const nextBtn = page.getByRole('button', { name: /next|continue/i });
+  const nextBtn = page.locator('form button, main button').filter({ hasText: /next|continue/i });
   if (await nextBtn.isVisible()) {
     await nextBtn.click();
     await page.waitForTimeout(500);
@@ -171,7 +171,7 @@ test('capture onboarding — profile, avatar, planets', async ({ page }) => {
     });
 
     // Click next to planet selection (step 3)
-    const next2 = page.getByRole('button', { name: /next|continue/i });
+    const next2 = page.locator('form button, main button').filter({ hasText: /next|continue/i });
     if (await next2.isVisible()) {
       await next2.click();
       await page.waitForTimeout(500);

@@ -5,15 +5,36 @@
  * Requires: Local Docker PostgreSQL with migration applied
  *
  * Covers:
- * - Registration and login
- * - Sequential refresh token rotation
- * - Concurrent refresh (one succeeds, one fails — no family revocation by loser)
- * - Genuine replay detection with committed family revocation
- * - Transaction persistence verification
+ * - Concurrent refresh token rotation with grace interval
+ * - Direct DB verification of token rows
+ * - Winner successor validity
+ * - Genuine replay detection after grace interval
+ * - Committed family revocation
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { createHash } from 'node:crypto';
 
 const API_BASE = process.env['TEST_API_URL'] ?? 'http://localhost:3000';
+const DATABASE_URL =
+  process.env['DATABASE_URL'] ??
+  'postgresql://wildtails:wildtails_local_dev@localhost:5432/wildtails';
+
+// Direct DB query helper — uses pg via dynamic import to avoid bundling issues
+async function queryDB<T>(sql: string, params: unknown[] = []): Promise<T[]> {
+  const pg = await import('pg');
+  const client = new pg.default.Client({ connectionString: DATABASE_URL });
+  await client.connect();
+  try {
+    const result = await client.query(sql, params);
+    return result.rows as T[];
+  } finally {
+    await client.end();
+  }
+}
+
+function sha256(input: string): string {
+  return createHash('sha256').update(input).digest('hex');
+}
 
 async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
   return fetch(`${API_BASE}${path}`, {
@@ -58,47 +79,30 @@ describe('Auth Integration (PostgreSQL-backed)', () => {
     expect(refreshToken).toBeTruthy();
   });
 
-  describe('Sequential refresh token rotation', () => {
-    it('rotates token successfully', async () => {
-      const res = await apiFetch('/auth/refresh', {
-        method: 'POST',
-        body: JSON.stringify({ refreshToken }),
-      });
-      expect(res.status).toBe(200);
-      const data = await res.json();
-      expect(data.data.accessToken).toBeTruthy();
-      expect(data.data.refreshToken).toBeTruthy();
-      expect(data.data.expiresIn).toBe(900);
+  describe('Concurrent refresh token rotation', () => {
+    let winnerRefreshToken: string | null = null;
+    let originalTokenHash: string;
+    let originalFamily: string;
 
-      // Update for subsequent tests
-      refreshToken = data.data.refreshToken;
-      accessToken = data.data.accessToken;
-    });
-  });
-
-  describe('Concurrent refresh requests', () => {
-    let freshToken: string;
-
-    beforeAll(async () => {
-      // Get a fresh token for this test group
-      const loginRes = await apiFetch('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email: testEmail, password: testPassword }),
-      });
-      const loginData = await loginRes.json();
-      freshToken = loginData.data.refreshToken;
-      accessToken = loginData.data.accessToken;
+    it('records the original token family', async () => {
+      originalTokenHash = sha256(refreshToken);
+      const rows = await queryDB<{ family: string }>(
+        'SELECT family FROM refresh_tokens WHERE "tokenHash" = $1',
+        [originalTokenHash],
+      );
+      expect(rows.length).toBe(1);
+      originalFamily = rows[0]!.family;
     });
 
     it('exactly one of two concurrent refreshes succeeds', async () => {
       const [res1, res2] = await Promise.all([
         apiFetch('/auth/refresh', {
           method: 'POST',
-          body: JSON.stringify({ refreshToken: freshToken }),
+          body: JSON.stringify({ refreshToken }),
         }),
         apiFetch('/auth/refresh', {
           method: 'POST',
-          body: JSON.stringify({ refreshToken: freshToken }),
+          body: JSON.stringify({ refreshToken }),
         }),
       ]);
 
@@ -113,22 +117,49 @@ describe('Auth Integration (PostgreSQL-backed)', () => {
       expect(successes.length).toBe(1);
       expect(failures.length).toBe(1);
 
-      const winner = successes[0]!;
-      expect(winner.body.data.accessToken).toBeTruthy();
-      expect(winner.body.data.refreshToken).toBeTruthy();
+      winnerRefreshToken = successes[0]!.body.data.refreshToken;
+      accessToken = successes[0]!.body.data.accessToken;
+    });
 
-      // Update tokens for subsequent tests
-      refreshToken = winner.body.data.refreshToken;
-      accessToken = winner.body.data.accessToken;
+    it('DB: exactly one successor row was created', async () => {
+      const rows = await queryDB<{ id: string }>(
+        'SELECT id FROM refresh_tokens WHERE family = $1 AND "replacedByTokenId" IS NULL AND "revokedAt" IS NULL',
+        [originalFamily],
+      );
+      // The successor token: has no replacedByTokenId (it's the current active one)
+      expect(rows.length).toBe(1);
+    });
+
+    it('DB: the concurrent loser did NOT revoke any token in the winner family', async () => {
+      const revokedRows = await queryDB<{ id: string }>(
+        'SELECT id FROM refresh_tokens WHERE family = $1 AND "revokedAt" IS NOT NULL',
+        [originalFamily],
+      );
+      expect(revokedRows.length).toBe(0);
+    });
+
+    it('the winner successor token is valid for another refresh', async () => {
+      expect(winnerRefreshToken).toBeTruthy();
+      const res = await apiFetch('/auth/refresh', {
+        method: 'POST',
+        body: JSON.stringify({ refreshToken: winnerRefreshToken }),
+      });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.data.accessToken).toBeTruthy();
+      expect(data.data.refreshToken).toBeTruthy();
+      refreshToken = data.data.refreshToken;
+      accessToken = data.data.accessToken;
     });
   });
 
-  describe('Genuine replay detection and family revocation', () => {
+  describe('Genuine replay detection after grace interval', () => {
     let consumedToken: string;
     let successorToken: string;
+    let replayFamily: string;
 
     beforeAll(async () => {
-      // Get a clean token family via login
+      // Fresh login for a clean family
       const loginRes = await apiFetch('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email: testEmail, password: testPassword }),
@@ -136,6 +167,13 @@ describe('Auth Integration (PostgreSQL-backed)', () => {
       const loginData = await loginRes.json();
       consumedToken = loginData.data.refreshToken;
       accessToken = loginData.data.accessToken;
+
+      const consumedHash = sha256(consumedToken);
+      const rows = await queryDB<{ family: string }>(
+        'SELECT family FROM refresh_tokens WHERE "tokenHash" = $1',
+        [consumedHash],
+      );
+      replayFamily = rows[0]!.family;
     });
 
     it('normal rotation produces a successor', async () => {
@@ -149,7 +187,12 @@ describe('Auth Integration (PostgreSQL-backed)', () => {
       accessToken = data.data.accessToken;
     });
 
-    it('replaying the consumed token returns 401', async () => {
+    it('wait beyond the grace interval', async () => {
+      // The grace interval is 10 seconds. Wait 11 seconds.
+      await new Promise((r) => setTimeout(r, 11_000));
+    }, 15_000);
+
+    it('replaying the consumed token after grace interval returns 401', async () => {
       const res = await apiFetch('/auth/refresh', {
         method: 'POST',
         body: JSON.stringify({ refreshToken: consumedToken }),
@@ -157,7 +200,18 @@ describe('Auth Integration (PostgreSQL-backed)', () => {
       expect(res.status).toBe(401);
     });
 
-    it('replay revoked the entire family — successor is now rejected', async () => {
+    it('DB: the entire family is revoked', async () => {
+      const rows = await queryDB<{ id: string; revokedAt: string | null }>(
+        'SELECT id, "revokedAt" FROM refresh_tokens WHERE family = $1',
+        [replayFamily],
+      );
+      expect(rows.length).toBeGreaterThanOrEqual(2);
+      for (const row of rows) {
+        expect(row.revokedAt).not.toBeNull();
+      }
+    });
+
+    it('the successor token is rejected after family revocation', async () => {
       const res = await apiFetch('/auth/refresh', {
         method: 'POST',
         body: JSON.stringify({ refreshToken: successorToken }),
@@ -165,24 +219,22 @@ describe('Auth Integration (PostgreSQL-backed)', () => {
       expect(res.status).toBe(401);
     });
 
-    it('family revocation was committed (not rolled back)', async () => {
-      // Both consumed and successor tokens are now rejected,
-      // proving the revocation was committed before the 401 response.
-      // A fresh login creates a new family that works normally.
+    it('family revocation was committed — fresh login works on a new family', async () => {
       const loginRes = await apiFetch('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email: testEmail, password: testPassword }),
       });
       expect(loginRes.status).toBe(200);
       const loginData = await loginRes.json();
+      refreshToken = loginData.data.refreshToken;
+      accessToken = loginData.data.accessToken;
 
+      // New family is independent
       const refreshRes = await apiFetch('/auth/refresh', {
         method: 'POST',
-        body: JSON.stringify({ refreshToken: loginData.data.refreshToken }),
+        body: JSON.stringify({ refreshToken }),
       });
       expect(refreshRes.status).toBe(200);
-
-      // Update for cleanup
       const refreshData = await refreshRes.json();
       refreshToken = refreshData.data.refreshToken;
       accessToken = refreshData.data.accessToken;

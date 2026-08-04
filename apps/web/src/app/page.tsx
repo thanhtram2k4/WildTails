@@ -30,10 +30,12 @@ export default function RootPage() {
     >
       <div className="flex flex-col items-center gap-4">
         <span
-          className="motion-safe:animate-spin h-10 w-10 rounded-full border-4 border-zinc-600 border-t-amber-500"
+          className="motion-safe:animate-spin h-10 w-10 rounded-full border-4 border-slate-200 border-t-[#0d9488]"
           aria-hidden="true"
         />
-        <p className="text-sm text-zinc-500">Loading WildTails...</p>
+        <p className="text-sm" style={{ color: 'var(--wt-text-muted)' }}>
+          Loading WildTails...
+        </p>
       </div>
     </div>
   );

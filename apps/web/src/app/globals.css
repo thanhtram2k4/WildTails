@@ -1,1 +1,30 @@
 @import 'tailwindcss';
+
+@layer base {
+  :root {
+    --wt-navy: #1e3a5f;
+    --wt-teal: #0d9488;
+    --wt-yellow: #f59e0b;
+    --wt-bg: #f8fafc;
+    --wt-card: #ffffff;
+    --wt-border: #e2e8f0;
+    --wt-text: #1e3a5f;
+    --wt-text-muted: #64748b;
+  }
+
+  body {
+    background-color: var(--wt-bg);
+    color: var(--wt-text);
+  }
+
+  /* Respect reduced motion globally */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

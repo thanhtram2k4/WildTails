@@ -136,11 +136,14 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-8">
       {/* Welcome banner */}
-      <section className="flex items-center gap-6 rounded-xl border border-zinc-700 bg-zinc-800/40 p-6">
+      <section
+        className="flex items-center gap-6 rounded-xl border p-6"
+        style={{ backgroundColor: 'var(--wt-card)', borderColor: 'var(--wt-border)' }}
+      >
         <div className="shrink-0">
           {profileState.status === 'loading' ? (
             <div
-              className="h-20 w-20 rounded-full bg-zinc-700 motion-safe:animate-pulse"
+              className="h-20 w-20 rounded-full bg-slate-200 motion-safe:animate-pulse"
               aria-hidden="true"
             />
           ) : (
@@ -148,21 +151,27 @@ export default function DashboardPage() {
           )}
         </div>
         <div>
-          <p className="text-sm text-zinc-400">Welcome back,</p>
+          <p className="text-sm" style={{ color: 'var(--wt-text-muted)' }}>
+            Welcome back,
+          </p>
           {profileState.status === 'loading' ? (
             <div
-              className="mt-1 h-7 w-40 rounded bg-zinc-700 motion-safe:animate-pulse"
+              className="mt-1 h-7 w-40 rounded bg-slate-200 motion-safe:animate-pulse"
               aria-hidden="true"
             />
           ) : (
-            <h1 className="text-2xl font-bold text-zinc-100">{displayName || 'Explorer'}</h1>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--wt-navy)' }}>
+              {displayName || 'Explorer'}
+            </h1>
           )}
           {profileState.status === 'success' && profileState.data.bio ? (
-            <p className="mt-2 text-sm text-zinc-400">{profileState.data.bio}</p>
+            <p className="mt-2 text-sm" style={{ color: 'var(--wt-text-muted)' }}>
+              {profileState.data.bio}
+            </p>
           ) : null}
           {profileState.status === 'error' ? (
             <div className="mt-2 flex items-center gap-2">
-              <p className="text-sm text-red-400">{profileState.message}</p>
+              <p className="text-sm text-red-600">{profileState.message}</p>
               <Button variant="ghost" size="sm" onClick={() => setProfileRetry((n) => n + 1)}>
                 Retry
               </Button>
@@ -174,12 +183,17 @@ export default function DashboardPage() {
       {/* Planets section */}
       <section aria-labelledby="planets-heading">
         <div className="mb-4 flex items-center justify-between">
-          <h2 id="planets-heading" className="text-lg font-semibold text-zinc-200">
+          <h2
+            id="planets-heading"
+            className="text-lg font-semibold"
+            style={{ color: 'var(--wt-navy)' }}
+          >
             Your planets
           </h2>
           <Link
             href="/onboarding"
-            className="text-sm text-amber-400 hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded"
+            className="text-sm underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d9488] rounded"
+            style={{ color: 'var(--wt-teal)' }}
           >
             Manage
           </Link>
@@ -190,21 +204,27 @@ export default function DashboardPage() {
             {Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
-                className="h-20 rounded-xl bg-zinc-700 motion-safe:animate-pulse"
+                className="h-20 rounded-xl bg-slate-200 motion-safe:animate-pulse"
                 aria-hidden="true"
               />
             ))}
           </div>
         ) : planetsState.status === 'error' ? (
-          <div className="flex flex-col items-center gap-3 rounded-xl border border-zinc-700 py-8 text-center">
-            <p className="text-sm text-red-400">{planetsState.message}</p>
+          <div
+            className="flex flex-col items-center gap-3 rounded-xl border py-8 text-center"
+            style={{ borderColor: 'var(--wt-border)' }}
+          >
+            <p className="text-sm text-red-600">{planetsState.message}</p>
             <Button variant="secondary" size="sm" onClick={() => setPlanetsRetry((n) => n + 1)}>
               Retry
             </Button>
           </div>
         ) : planetsState.status === 'success' && planetsState.data.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-700 py-10 text-center">
-            <p className="text-zinc-500">You have not joined any planets yet.</p>
+          <div
+            className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-10 text-center"
+            style={{ borderColor: 'var(--wt-border)' }}
+          >
+            <p style={{ color: 'var(--wt-text-muted)' }}>You have not joined any planets yet.</p>
             <Link href="/onboarding">
               <Button size="sm">Explore planets</Button>
             </Link>
@@ -214,13 +234,16 @@ export default function DashboardPage() {
             {planetsState.data.map((planet) => (
               <div
                 key={planet.id}
-                className="flex flex-col items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800/40 p-4 text-center"
+                className="flex flex-col items-center gap-2 rounded-xl border p-4 text-center"
+                style={{ backgroundColor: 'var(--wt-card)', borderColor: 'var(--wt-border)' }}
               >
                 <span className="text-3xl" aria-hidden="true">
                   {PLANET_ICONS[planet.slug] ?? ''}
                 </span>
-                <p className="text-sm font-semibold capitalize text-zinc-200">{planet.name}</p>
-                <p className="text-xs text-zinc-500">
+                <p className="text-sm font-semibold capitalize" style={{ color: 'var(--wt-navy)' }}>
+                  {planet.name}
+                </p>
+                <p className="text-xs" style={{ color: 'var(--wt-text-muted)' }}>
                   {planet.memberCount.toLocaleString()} members
                 </p>
               </div>
@@ -231,7 +254,11 @@ export default function DashboardPage() {
 
       {/* Quick actions */}
       <section aria-labelledby="actions-heading">
-        <h2 id="actions-heading" className="mb-4 text-lg font-semibold text-zinc-200">
+        <h2
+          id="actions-heading"
+          className="mb-4 text-lg font-semibold"
+          style={{ color: 'var(--wt-navy)' }}
+        >
           Quick actions
         </h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -273,14 +300,19 @@ function QuickAction({
   return (
     <Link
       href={href}
-      className="flex items-center gap-4 rounded-xl border border-zinc-700 bg-zinc-800/40 p-4 transition-colors hover:border-zinc-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900"
+      className="flex items-center gap-4 rounded-xl border p-4 transition-colors hover:border-[#0d9488] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d9488] focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+      style={{ backgroundColor: 'var(--wt-card)', borderColor: 'var(--wt-border)' }}
     >
       <span className="text-2xl" aria-hidden="true">
         {icon}
       </span>
       <div>
-        <p className="text-sm font-medium text-zinc-200">{label}</p>
-        <p className="text-xs text-zinc-500">{description}</p>
+        <p className="text-sm font-medium" style={{ color: 'var(--wt-navy)' }}>
+          {label}
+        </p>
+        <p className="text-xs" style={{ color: 'var(--wt-text-muted)' }}>
+          {description}
+        </p>
       </div>
     </Link>
   );

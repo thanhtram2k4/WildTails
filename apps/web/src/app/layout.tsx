@@ -14,7 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-zinc-900 text-zinc-100 antialiased">
+      <body
+        className="min-h-screen antialiased"
+        style={{ backgroundColor: 'var(--wt-bg)', color: 'var(--wt-text)' }}
+      >
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
