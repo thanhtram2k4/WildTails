@@ -5,8 +5,8 @@
 - Phase: 01
 - Status: DONE
 - Active branch: phase/01-repository-bootstrap
-- Last verified commit: 1e41859
-- Updated at: 2026-08-03
+- Last verified commit: pending
+- Updated at: 2026-08-04
 
 ## Phase checklist
 
@@ -66,6 +66,8 @@ Phase 01 – Final verification (2026-08-03, human-approved):
 - Health: API, Worker, Web all return 200 with correct JSON
 - Secrets: working-tree scan clean, no tracked .env files
 - Redundant pnpm.yaml removed; pnpm-workspace.yaml is authoritative
+- pnpm dev: fixed cross-platform filter (`./apps/**` replaces `./apps/*`)
+- next-env.d.ts: added to .prettierignore (auto-generated file)
 - Evidence: docs/evidence/phase-01/
 
 ## Known technical debt

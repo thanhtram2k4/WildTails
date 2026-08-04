@@ -16,6 +16,8 @@
 | Hardcoded DATABASE_URL in CI                  | `prisma generate` doesn't need DATABASE_URL with empty schema | Removed the env block from CI `prisma:generate` step (QA finding MEDIUM-2)                                          |
 | `*.tsbuildinfo` not gitignored                | Incremental build files could be accidentally staged          | Added `*.tsbuildinfo` to `.gitignore` (QA finding LOW-1)                                                            |
 | Vitest picking up `dist/` compiled spec files | After `nest build`, CJS spec files in dist/ were found        | Added `exclude: ['dist/**', 'node_modules/**']` to vitest configs (post-build test failure)                         |
+| `pnpm dev` returns "No projects matched"      | `--filter './apps/*'` glob fails on Windows path separators   | Changed filter to `--filter "./apps/**"` which works cross-platform                                                 |
+| `next-env.d.ts` Prettier check failure        | Auto-generated file not in `.prettierignore`                  | Added `next-env.d.ts` to `.prettierignore`                                                                          |
 
 ## Cosmetic Warnings (Not Blocking)
 

@@ -157,6 +157,8 @@ All Vietnamese text translated to English per decision D12. Approved meaning pre
 | `*.tsbuildinfo` not gitignored                | Incremental build files could be staged (QA finding)            | Added to `.gitignore`                                             |
 | Vitest picking up `dist/` compiled specs      | `nest build` compiles spec files to CJS in dist/                | Added `exclude: ['dist/**', 'node_modules/**']` to vitest configs |
 | Redundant `pnpm.yaml`                         | Legacy format not used by pnpm 11 (closure finding)             | Removed; `pnpm-workspace.yaml` allowBuilds is authoritative       |
+| `pnpm dev` "No projects matched"              | `--filter './apps/*'` glob fails on Windows path separators     | Changed to `--filter "./apps/**"` (cross-platform)                |
+| `next-env.d.ts` fails `format:check`          | Auto-generated file not in `.prettierignore`                    | Added `next-env.d.ts` to `.prettierignore`                        |
 
 ## QA/Security Review
 
