@@ -4,3 +4,4 @@ dist
 coverage
 pnpm-lock.yaml
 packages/database/prisma/generated
+next-env.d.ts

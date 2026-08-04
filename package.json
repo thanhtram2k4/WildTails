@@ -6,7 +6,7 @@
     "node": ">=24 <25"
   },
   "scripts": {
-    "dev": "pnpm --filter './apps/*' --parallel run dev",
+    "dev": "pnpm --filter \"./apps/**\" --parallel run dev",
     "lint": "pnpm -r run lint",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
