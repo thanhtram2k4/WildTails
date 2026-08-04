@@ -5,7 +5,7 @@
 - Phase: 01
 - Status: DONE
 - Active branch: phase/01-repository-bootstrap
-- Last verified commit: pending
+- Last verified commit: f1dffc2
 - Updated at: 2026-08-04
 
 ## Phase checklist
