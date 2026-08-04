@@ -11,5 +11,8 @@
   "devDependencies": {
     "@wildtails/config": "workspace:*",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
   }
 }

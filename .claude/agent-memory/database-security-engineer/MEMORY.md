@@ -1,1 +1,2 @@
 - [Phase 01 database package bootstrap](project_phase01_database_bootstrap.md) — packages/database skeleton created; key decisions on __dirname vs import.meta, .mjs ESLint config, no models yet
+- [Phase 02 Prisma schema draft](project_phase02_schema_draft.md) — 31-table draft validated with Prisma 7.9.1; ERD at docs/architecture/erd.md; key design decisions S01–S11 recorded

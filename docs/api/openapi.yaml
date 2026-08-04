@@ -1,0 +1,3089 @@
+openapi: 3.1.0
+
+info:
+  title: WildTails API
+  version: 0.1.0
+  description: >
+    WildTails MVP REST API — gamified social journaling and knowledge-management platform.
+    All endpoints return the unified success/error envelope.
+    Private journals default to PRIVATE and are never exposed without explicit permission checks.
+    AI output is always a draft; it is never published automatically.
+
+servers:
+  - url: http://localhost:3000
+    description: Local development
+
+# ---------------------------------------------------------------------------
+# Security
+# ---------------------------------------------------------------------------
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  # -------------------------------------------------------------------------
+  # Reusable schemas
+  # -------------------------------------------------------------------------
+  schemas:
+    # ------ Envelope --------------------------------------------------------
+    ErrorEnvelope:
+      type: object
+      required: [success, error]
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        error:
+          $ref: '#/components/schemas/ErrorDetail'
+
+    ErrorDetail:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          enum:
+            - VALIDATION_ERROR
+            - UNAUTHORIZED
+            - FORBIDDEN
+            - NOT_FOUND
+            - CONFLICT
+            - RATE_LIMITED
+            - INTERNAL_ERROR
+            - SERVICE_UNAVAILABLE
+        message:
+          type: string
+          description: Human-readable message safe to display. Must not contain stack traces.
+        details:
+          description: Structured validation details. Never contains stack traces.
+        requestId:
+          type: string
+
+    SuccessEnvelope:
+      type: object
+      required: [success, data]
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        data:
+          description: Payload — shape varies per endpoint (see individual responses).
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    PaginationMeta:
+      type: object
+      required: [cursor, hasMore]
+      properties:
+        cursor:
+          type: string
+          nullable: true
+          description: Opaque cursor for the next page. Null when no further pages exist.
+        hasMore:
+          type: boolean
+        total:
+          type: integer
+          minimum: 0
+          description: Total item count — only present when explicitly requested.
+
+    # ------ Pagination query params (inline where used) ---------------------
+    # Defined here for documentation reference; used as query parameters inline.
+    CursorPaginationRequest:
+      type: object
+      properties:
+        cursor:
+          type: string
+          description: Opaque cursor from previous page. Omit for first page.
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+
+    # ------ Enums -----------------------------------------------------------
+    Visibility:
+      type: string
+      enum: [PRIVATE, PUBLIC, SELECTED_USERS, PLANET_MEMBERS]
+
+    AiJobState:
+      type: string
+      enum:
+        - QUEUED
+        - FETCHING_SOURCE
+        - PREPROCESSING
+        - SUMMARIZING
+        - CLASSIFYING
+        - SAVING
+        - COMPLETED
+        - FAILED
+        - CANCELLED
+
+    PlanetRole:
+      type: string
+      enum: [OWNER, ADMIN, MODERATOR, MEMBER]
+
+    PostType:
+      type: string
+      enum: [ORIGINAL, JOURNAL_SHARE, GOAL_UPDATE]
+
+    ReactionType:
+      type: string
+      enum: [LIKE, INSIGHTFUL, SUPPORTIVE, FUNNY]
+
+    NotificationType:
+      type: string
+      enum:
+        - FOLLOW
+        - COMMENT
+        - REACTION
+        - MENTION
+        - GAME_INVITE
+        - GOAL_REMINDER
+        - AI_JOB_COMPLETE
+        - MODERATION
+
+    ReportTargetType:
+      type: string
+      enum: [POST, COMMENT, USER]
+
+    PointSource:
+      type: string
+      enum:
+        - POST_CREATE
+        - COMMENT_CREATE
+        - REACTION_GIVE
+        - GAME_WIN
+        - GAME_PARTICIPATE
+        - AI_LOG_CREATE
+        - GOAL_COMPLETE
+        - DAILY_LOGIN
+        - MODERATION_PENALTY
+
+    # ------ Auth / Identity -------------------------------------------------
+    RegisterRequest:
+      type: object
+      required: [email, password, displayName]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          description: Raw password — never logged.
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 50
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          description: Raw password — never logged.
+
+    LoginResponse:
+      type: object
+      required: [accessToken, refreshToken, expiresIn]
+      properties:
+        accessToken:
+          type: string
+          description: Short-lived JWT — never log.
+        refreshToken:
+          type: string
+          description: Long-lived opaque token — never log.
+        expiresIn:
+          type: integer
+          minimum: 1
+          description: Access token lifetime in seconds.
+
+    RefreshRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+          description: Refresh token — never logged.
+
+    UserProfileResponse:
+      type: object
+      required: [id, email, displayName, joinedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+        avatarUrl:
+          type: string
+          format: uri
+        bio:
+          type: string
+          maxLength: 500
+        joinedAt:
+          type: string
+          format: date-time
+
+    UpdateUserProfileRequest:
+      type: object
+      properties:
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 50
+        bio:
+          type: string
+          maxLength: 500
+        avatarUrl:
+          type: string
+          format: uri
+          description: Signed URL pointing to an already-uploaded avatar in object storage.
+
+    FollowEntry:
+      type: object
+      required: [userId, displayName, followedAt]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+        avatarUrl:
+          type: string
+          format: uri
+        followedAt:
+          type: string
+          format: date-time
+
+    # ------ Planet ----------------------------------------------------------
+    PlanetResponse:
+      type: object
+      required: [id, name, slug, isDefault, memberCount, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+          description: URL-safe slug, unique across all planets.
+        description:
+          type: string
+        iconUrl:
+          type: string
+          format: uri
+        isDefault:
+          type: boolean
+        memberCount:
+          type: integer
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+
+    PlanetMembershipResponse:
+      type: object
+      required: [planetId, userId, role, joinedAt]
+      properties:
+        planetId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        role:
+          $ref: '#/components/schemas/PlanetRole'
+        joinedAt:
+          type: string
+          format: date-time
+
+    PlanetMemberEntry:
+      type: object
+      required: [userId, displayName, role, joinedAt]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+        avatarUrl:
+          type: string
+          format: uri
+        role:
+          $ref: '#/components/schemas/PlanetRole'
+        joinedAt:
+          type: string
+          format: date-time
+
+    # ------ Knowledge — Journal ---------------------------------------------
+    CreateJournalRequest:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        body:
+          type: string
+          description: May be omitted for a title-only stub.
+        planetId:
+          type: string
+          format: uuid
+        visibility:
+          $ref: '#/components/schemas/Visibility'
+          default: PRIVATE
+        tagIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        folderId:
+          type: string
+          format: uuid
+        goalId:
+          type: string
+          format: uuid
+
+    UpdateJournalRequest:
+      type: object
+      description: All fields are optional; supply only the fields to change.
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        body:
+          type: string
+        planetId:
+          type: string
+          format: uuid
+        visibility:
+          $ref: '#/components/schemas/Visibility'
+        tagIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        folderId:
+          type: string
+          format: uuid
+        goalId:
+          type: string
+          format: uuid
+
+    JournalTag:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+
+    JournalVersion:
+      type: object
+      required: [id, body, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        body:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    JournalResponse:
+      type: object
+      required: [id, title, ownerId, visibility, tags, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        body:
+          type: string
+          description: Omitted when caller does not have read permission.
+        ownerId:
+          type: string
+          format: uuid
+        planetId:
+          type: string
+          format: uuid
+        visibility:
+          $ref: '#/components/schemas/Visibility'
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/JournalTag'
+        folder:
+          type: object
+          required: [id, name]
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+        goal:
+          type: object
+          required: [id, title]
+          properties:
+            id:
+              type: string
+              format: uuid
+            title:
+              type: string
+        aiSummary:
+          type: string
+          description: AI-generated summary draft. Not published automatically.
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/JournalVersion'
+          description: Previous body versions, newest first.
+        sharePermissions:
+          type: array
+          items:
+            type: object
+            required: [userId, expiresAt]
+            properties:
+              userId:
+                type: string
+                format: uuid
+              expiresAt:
+                type: string
+                format: date-time
+                nullable: true
+          description: Active share permissions for SELECTED_USERS journals.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # ------ Knowledge — Folder ----------------------------------------------
+    CreateFolderRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        parentId:
+          type: string
+          format: uuid
+        planetId:
+          type: string
+          format: uuid
+
+    UpdateFolderRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        parentId:
+          type: string
+          format: uuid
+
+    FolderResponse:
+      type: object
+      required: [id, name, ownerId, journalCount, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        ownerId:
+          type: string
+          format: uuid
+        parentId:
+          type: string
+          format: uuid
+        journalCount:
+          type: integer
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+
+    # ------ Knowledge — Tag -------------------------------------------------
+    CreateTagRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+
+    TagResponse:
+      type: object
+      required: [id, name, ownerId]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        ownerId:
+          type: string
+          format: uuid
+
+    # ------ Knowledge — Goal ------------------------------------------------
+    CreateGoalRequest:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+        deadline:
+          type: string
+          format: date-time
+          description: ISO-8601 datetime. Omit for no deadline.
+        planetId:
+          type: string
+          format: uuid
+
+    UpdateGoalRequest:
+      type: object
+      description: All fields optional; supply only the fields to change.
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: 0–100. Server validates range. Do not auto-complete on AI suggestion.
+        deadline:
+          type: string
+          format: date-time
+
+    GoalResponse:
+      type: object
+      required: [id, title, ownerId, progress, deadline, linkedJournalCount, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        ownerId:
+          type: string
+          format: uuid
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        deadline:
+          type: string
+          format: date-time
+          nullable: true
+        planetId:
+          type: string
+          format: uuid
+        linkedJournalCount:
+          type: integer
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # ------ Knowledge — Share Permission ------------------------------------
+    CreateSharePermissionRequest:
+      type: object
+      required: [journalId, userId]
+      properties:
+        journalId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+          description: The user being granted read access.
+        expiresAt:
+          type: string
+          format: date-time
+          description: Omit for a non-expiring grant.
+
+    SharePermissionResponse:
+      type: object
+      required: [id, journalId, userId, grantedBy, expiresAt, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        journalId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        grantedBy:
+          type: string
+          format: uuid
+          description: Must be the journal owner.
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    # ------ Social — Post ---------------------------------------------------
+    CreatePostRequest:
+      type: object
+      required: [body, planetId, type]
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        planetId:
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/PostType'
+        journalId:
+          type: string
+          format: uuid
+          description: Required when type is JOURNAL_SHARE.
+        goalId:
+          type: string
+          format: uuid
+          description: Required when type is GOAL_UPDATE.
+
+    PostResponse:
+      type: object
+      required:
+        [id, body, authorId, planetId, type, reactionCounts, commentCount, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        body:
+          type: string
+        authorId:
+          type: string
+          format: uuid
+        planetId:
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/PostType'
+        journalId:
+          type: string
+          format: uuid
+        goalId:
+          type: string
+          format: uuid
+        reactionCounts:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+          description: Map of ReactionType to count.
+        commentCount:
+          type: integer
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # ------ Social — Comment ------------------------------------------------
+    CreateCommentRequest:
+      type: object
+      required: [body, postId]
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        postId:
+          type: string
+          format: uuid
+        parentId:
+          type: string
+          format: uuid
+          description: Present for replies. Must belong to the same postId.
+
+    CommentResponse:
+      type: object
+      required: [id, body, authorId, postId, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        body:
+          type: string
+        authorId:
+          type: string
+          format: uuid
+        postId:
+          type: string
+          format: uuid
+        parentId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    # ------ Social — Reaction -----------------------------------------------
+    ToggleReactionRequest:
+      type: object
+      required: [postId, type]
+      properties:
+        postId:
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/ReactionType'
+
+    ReactionResponse:
+      type: object
+      required: [postId, counts]
+      properties:
+        postId:
+          type: string
+          format: uuid
+        counts:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+          description: Map of ReactionType to count.
+        userReaction:
+          $ref: '#/components/schemas/ReactionType'
+          description: The caller's current reaction. Absent if caller has no reaction.
+
+    # ------ Social — Report -------------------------------------------------
+    CreateReportRequest:
+      type: object
+      required: [targetType, targetId, reason]
+      properties:
+        targetType:
+          $ref: '#/components/schemas/ReportTargetType'
+        targetId:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+
+    ReportResponse:
+      type: object
+      required: [id, targetType, targetId, reason, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        targetType:
+          $ref: '#/components/schemas/ReportTargetType'
+        targetId:
+          type: string
+          format: uuid
+        reason:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    # ------ Social — Saved Post ---------------------------------------------
+    SavedPostEntry:
+      type: object
+      required: [postId, savedAt]
+      properties:
+        postId:
+          type: string
+          format: uuid
+        savedAt:
+          type: string
+          format: date-time
+        post:
+          $ref: '#/components/schemas/PostResponse'
+
+    # ------ AI Jobs ---------------------------------------------------------
+    CreateAiJobRequest:
+      type: object
+      description: One of sourceUrl or manualTranscript must be provided.
+      properties:
+        sourceUrl:
+          type: string
+          format: uri
+          description: Public URL to fetch and process. Mutually exclusive with manualTranscript.
+        manualTranscript:
+          type: string
+          maxLength: 100000
+          description: >
+            Manual transcript entered by the user. Treated as untrusted input —
+            must not alter system instructions (prompt injection mitigation).
+        promptVersion:
+          type: string
+          description: Pins this job to a specific prompt version for reproducibility.
+
+    AiJobStepResponse:
+      type: object
+      required: [state, startedAt]
+      properties:
+        state:
+          $ref: '#/components/schemas/AiJobState'
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        error:
+          type: string
+          description: Structured error code; absent on success.
+
+    AiJobResponse:
+      type: object
+      required: [id, ownerId, state, promptVersion, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        ownerId:
+          type: string
+          format: uuid
+        state:
+          $ref: '#/components/schemas/AiJobState'
+        sourceUrl:
+          type: string
+          format: uri
+        promptVersion:
+          type: string
+        summary:
+          type: string
+          description: AI-generated summary draft. Not automatically published.
+        tags:
+          type: array
+          items:
+            type: string
+          description: AI-suggested tags. User must review before applying.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        error:
+          type: string
+          description: Structured error code for FAILED state.
+
+    # ------ Gamification ----------------------------------------------------
+    PointTransaction:
+      type: object
+      required: [id, userId, amount, source, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+          description: Positive for gains, negative for penalties. Integer only.
+        source:
+          $ref: '#/components/schemas/PointSource'
+        referenceId:
+          type: string
+          format: uuid
+          description: UUID of the entity that triggered this transaction.
+        referenceType:
+          type: string
+          description: Discriminator for the reference (e.g. POST, GAME_SESSION).
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    PointBalanceResponse:
+      type: object
+      required: [userId, totalPoints]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        totalPoints:
+          type: integer
+          description: Running total from the ledger.
+        rank:
+          type: integer
+          minimum: 1
+          description: Current leaderboard rank from periodic snapshot; may be slightly stale.
+
+    LeaderboardEntry:
+      type: object
+      required: [userId, displayName, totalPoints, rank]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+        avatarUrl:
+          type: string
+          format: uri
+        totalPoints:
+          type: integer
+        rank:
+          type: integer
+          minimum: 1
+
+    InfluenceScoreBreakdown:
+      type: object
+      required: [content, engagement, consistency, game, penalty]
+      properties:
+        content:
+          type: number
+          description: Points from published content.
+        engagement:
+          type: number
+          description: Points from community engagement.
+        consistency:
+          type: number
+          description: Points from sustained platform activity.
+        game:
+          type: number
+          description: Points from mini-game participation and wins.
+        penalty:
+          type: number
+          description: Negative modifier from moderation actions.
+
+    InfluenceScore:
+      type: object
+      required: [userId, score, rank, breakdown]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        score:
+          type: number
+          description: Composite score. Backend is the single source of truth.
+        rank:
+          type: integer
+          minimum: 1
+          description: Leaderboard position from the latest snapshot.
+        breakdown:
+          $ref: '#/components/schemas/InfluenceScoreBreakdown'
+
+    # ------ Platform — Notification -----------------------------------------
+    NotificationResponse:
+      type: object
+      required: [id, type, isRead, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/NotificationType'
+        isRead:
+          type: boolean
+        actorId:
+          type: string
+          format: uuid
+          description: User who triggered the notification. Absent for system notifications.
+        referenceId:
+          type: string
+          format: uuid
+          description: UUID of the related entity (post, comment, etc.).
+        referenceType:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    # ------ Platform — Media ------------------------------------------------
+    MediaUploadResponse:
+      type: object
+      required: [id, url, expiresAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+          format: uri
+          description: Signed URL valid for the duration specified by expiresAt.
+        expiresAt:
+          type: string
+          format: date-time
+
+    # ------ Health ----------------------------------------------------------
+    HealthResponse:
+      type: object
+      required: [status, service]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        service:
+          type: string
+
+  # -------------------------------------------------------------------------
+  # Reusable parameters
+  # -------------------------------------------------------------------------
+  parameters:
+    PathId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    QueryCursor:
+      name: cursor
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Opaque cursor from previous page. Omit for first page.
+
+    QueryLimit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  # -------------------------------------------------------------------------
+  # Reusable responses
+  # -------------------------------------------------------------------------
+  responses:
+    400:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    401:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    403:
+      description: Authenticated but not authorised
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    404:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    409:
+      description: Conflict (duplicate resource)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+
+# ===========================================================================
+# Tags
+# ===========================================================================
+tags:
+  - name: Identity
+    description: Authentication, user profile, and follow relationships.
+  - name: Planet
+    description: Planet directory, membership, and planet-scoped feeds.
+  - name: Knowledge
+    description: Journals, folders, tags, goals, and share permissions (Captain's Cabin).
+  - name: Social
+    description: Posts, comments, reactions, saved posts, and content reports.
+  - name: AI
+    description: AI Auto-Log job lifecycle and structured output retrieval.
+  - name: Gamification
+    description: Point ledger, leaderboard, and Influence Score.
+  - name: Platform
+    description: Notifications and media upload.
+
+# ===========================================================================
+# Paths
+# ===========================================================================
+paths:
+  # =========================================================================
+  # Auth
+  # =========================================================================
+  /auth/register:
+    post:
+      operationId: authRegister
+      summary: Register a new user account
+      tags: [Identity]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Account created and tokens issued
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '409':
+          $ref: '#/components/responses/409'
+
+  /auth/login:
+    post:
+      operationId: authLogin
+      summary: Authenticate with email and password
+      tags: [Identity]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+
+  /auth/refresh:
+    post:
+      operationId: authRefresh
+      summary: Exchange a refresh token for a new access token
+      tags: [Identity]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: New access token issued
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+
+  /auth/logout:
+    post:
+      operationId: authLogout
+      summary: Revoke the current session's refresh token
+      tags: [Identity]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Session revoked
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [revoked]
+                        properties:
+                          revoked:
+                            type: boolean
+        '401':
+          $ref: '#/components/responses/401'
+
+  # =========================================================================
+  # Users
+  # =========================================================================
+  /users/me:
+    get:
+      operationId: getUserMe
+      summary: Get the authenticated user's profile
+      tags: [Identity]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Own profile
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserProfileResponse'
+        '401':
+          $ref: '#/components/responses/401'
+
+    patch:
+      operationId: updateUserMe
+      summary: Update the authenticated user's profile
+      tags: [Identity]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserProfileRequest'
+      responses:
+        '200':
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserProfileResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+
+  /users/{id}:
+    get:
+      operationId: getUserById
+      summary: Get a public user profile by ID
+      tags: [Identity]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Public profile (email and private fields are omitted)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserProfileResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+
+  # =========================================================================
+  # Follow
+  # =========================================================================
+  /users/{id}/follow:
+    post:
+      operationId: followUser
+      summary: Follow a user
+      tags: [Identity]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '201':
+          description: Follow relationship created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/FollowEntry'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          $ref: '#/components/responses/409'
+
+    delete:
+      operationId: unfollowUser
+      summary: Unfollow a user
+      tags: [Identity]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Follow relationship removed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [unfollowed]
+                        properties:
+                          unfollowed:
+                            type: boolean
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+
+  /users/{id}/followers:
+    get:
+      operationId: listUserFollowers
+      summary: List followers of a user (paginated)
+      tags: [Identity]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - $ref: '#/components/parameters/QueryCursor'
+        - $ref: '#/components/parameters/QueryLimit'
+      responses:
+        '200':
+          description: Paginated follower list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FollowEntry'
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+
+  /users/{id}/following:
+    get:
+      operationId: listUserFollowing
+      summary: List users that a user is following (paginated)
+      tags: [Identity]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - $ref: '#/components/parameters/QueryCursor'
+        - $ref: '#/components/parameters/QueryLimit'
+      responses:
+        '200':
+          description: Paginated following list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FollowEntry'
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+
+  # =========================================================================
+  # Planets
+  # =========================================================================
+  /planets:
+    get:
+      operationId: listPlanets
+      summary: List all available planets (paginated)
+      tags: [Planet]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/QueryCursor'
+        - $ref: '#/components/parameters/QueryLimit'
+      responses:
+        '200':
+          description: Paginated planet list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PlanetResponse'
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/401'
+
+  /planets/{id}:
+    get:
+      operationId: getPlanetById
+      summary: Get a planet by ID
+      tags: [Planet]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Planet detail
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PlanetResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+
+  /planets/{id}/join:
+    post:
+      operationId: joinPlanet
+      summary: Join a planet
+      tags: [Planet]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '201':
+          description: Membership created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PlanetMembershipResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          $ref: '#/components/responses/409'
+
+  /planets/{id}/leave:
+    delete:
+      operationId: leavePlanet
+      summary: Leave a planet
+      tags: [Planet]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Membership removed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [left]
+                        properties:
+                          left:
+                            type: boolean
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+
+  /planets/{id}/members:
+    get:
+      operationId: listPlanetMembers
+      summary: List members of a planet (paginated)
+      tags: [Planet]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - $ref: '#/components/parameters/QueryCursor'
+        - $ref: '#/components/parameters/QueryLimit'
+      responses:
+        '200':
+          description: Paginated member list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PlanetMemberEntry'
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+
+  # =========================================================================
+  # Journals
+  # =========================================================================
+  /journals:
+    post:
+      operationId: createJournal
+      summary: Create a new journal entry
+      tags: [Knowledge]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateJournalRequest'
+      responses:
+        '201':
+          description: Journal created (defaults to PRIVATE visibility)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/JournalResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+
+    get:
+      operationId: listJournals
+      summary: List the authenticated user's own journals (paginated)
+      tags: [Knowledge]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/QueryCursor'
+        - $ref: '#/components/parameters/QueryLimit'
+        - name: folderId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by folder.
+        - name: tagId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by tag.
+        - name: goalId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by linked goal.
+      responses:
+        '200':
+          description: Paginated journal list (own journals only)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/JournalResponse'
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/401'
+
+  /journals/{id}:
+    get:
+      operationId: getJournalById
+      summary: Get a journal by ID (body only returned when caller has read permission)
+      tags: [Knowledge]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Journal detail
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/JournalResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+    patch:
+      operationId: updateJournal
+      summary: Update a journal (owner only)
+      tags: [Knowledge]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateJournalRequest'
+      responses:
+        '200':
+          description: Updated journal
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/JournalResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+    delete:
+      operationId: deleteJournal
+      summary: Delete a journal (owner only; soft-delete with audit)
+      tags: [Knowledge]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Journal deleted
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [deleted]
+                        properties:
+                          deleted:
+                            type: boolean
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+  /journals/{id}/versions:
+    get:
+      operationId: listJournalVersions
+      summary: List all body versions for a journal (newest first; owner only)
+      tags: [Knowledge]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Version history
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/JournalVersion'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+  # =========================================================================
+  # Share Permissions
+  # =========================================================================
+  /journals/{id}/share:
+    post:
+      operationId: createSharePermission
+      summary: Grant read access to a specific user for a journal (SELECTED_USERS flow)
+      tags: [Knowledge]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSharePermissionRequest'
+      responses:
+        '201':
+          description: Share permission granted
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SharePermissionResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          $ref: '#/components/responses/409'
+
+  /journals/{id}/shares:
+    get:
+      operationId: listSharePermissions
+      summary: List active share permissions for a journal (owner only)
+      tags: [Knowledge]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Active share permissions
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SharePermissionResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+  /journals/{id}/share/{permissionId}:
+    delete:
+      operationId: revokeSharePermission
+      summary: Revoke a share permission (owner only)
+      tags: [Knowledge]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - name: permissionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Permission revoked
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [revoked]
+                        properties:
+                          revoked:
+                            type: boolean
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+  # =========================================================================
+  # Folders
+  # =========================================================================
+  /folders:
+    post:
+      operationId: createFolder
+      summary: Create a folder
+      tags: [Knowledge]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFolderRequest'
+      responses:
+        '201':
+          description: Folder created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/FolderResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+
+    get:
+      operationId: listFolders
+      summary: List the authenticated user's own folders (paginated)
+      tags: [Knowledge]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/QueryCursor'
+        - $ref: '#/components/parameters/QueryLimit'
+      responses:
+        '200':
+          description: Paginated folder list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FolderResponse'
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/401'
+
+  /folders/{id}:
+    patch:
+      operationId: updateFolder
+      summary: Update a folder (owner only)
+      tags: [Knowledge]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFolderRequest'
+      responses:
+        '200':
+          description: Updated folder
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/FolderResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+    delete:
+      operationId: deleteFolder
+      summary: Delete a folder (owner only; journals inside are unparented, not deleted)
+      tags: [Knowledge]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Folder deleted
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [deleted]
+                        properties:
+                          deleted:
+                            type: boolean
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+  # =========================================================================
+  # Tags
+  # =========================================================================
+  /tags:
+    post:
+      operationId: createTag
+      summary: Create a tag
+      tags: [Knowledge]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTagRequest'
+      responses:
+        '201':
+          description: Tag created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/TagResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '409':
+          $ref: '#/components/responses/409'
+
+    get:
+      operationId: listTags
+      summary: List the authenticated user's own tags
+      tags: [Knowledge]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Tag list (not paginated — expected to be small per user)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TagResponse'
+        '401':
+          $ref: '#/components/responses/401'
+
+  # =========================================================================
+  # Goals
+  # =========================================================================
+  /goals:
+    post:
+      operationId: createGoal
+      summary: Create a new goal
+      tags: [Knowledge]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGoalRequest'
+      responses:
+        '201':
+          description: Goal created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/GoalResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+
+    get:
+      operationId: listGoals
+      summary: List the authenticated user's own goals (paginated)
+      tags: [Knowledge]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/QueryCursor'
+        - $ref: '#/components/parameters/QueryLimit'
+      responses:
+        '200':
+          description: Paginated goal list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/GoalResponse'
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/401'
+
+  /goals/{id}:
+    get:
+      operationId: getGoalById
+      summary: Get a goal by ID (owner only)
+      tags: [Knowledge]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Goal detail
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/GoalResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+    patch:
+      operationId: updateGoal
+      summary: Update a goal (owner only)
+      tags: [Knowledge]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGoalRequest'
+      responses:
+        '200':
+          description: Updated goal
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/GoalResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+    delete:
+      operationId: deleteGoal
+      summary: Delete a goal (owner only)
+      tags: [Knowledge]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Goal deleted
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [deleted]
+                        properties:
+                          deleted:
+                            type: boolean
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+  # =========================================================================
+  # Posts
+  # =========================================================================
+  /posts:
+    post:
+      operationId: createPost
+      summary: Create a post on a planet
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePostRequest'
+      responses:
+        '201':
+          description: Post created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PostResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          description: Caller is not a member of the target planet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /planets/{id}/posts:
+    get:
+      operationId: listPlanetPosts
+      summary: List posts on a planet feed (paginated; caller must be a member)
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - $ref: '#/components/parameters/QueryCursor'
+        - $ref: '#/components/parameters/QueryLimit'
+      responses:
+        '200':
+          description: Paginated planet feed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PostResponse'
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+  /posts/{id}:
+    get:
+      operationId: getPostById
+      summary: Get a post by ID
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Post detail
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PostResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+    delete:
+      operationId: deletePost
+      summary: Delete a post (author or planet admin only)
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Post deleted
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [deleted]
+                        properties:
+                          deleted:
+                            type: boolean
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+  # =========================================================================
+  # Comments
+  # =========================================================================
+  /posts/{id}/comments:
+    post:
+      operationId: createComment
+      summary: Add a comment to a post
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommentRequest'
+      responses:
+        '201':
+          description: Comment created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CommentResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+    get:
+      operationId: listPostComments
+      summary: List comments on a post (paginated)
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - $ref: '#/components/parameters/QueryCursor'
+        - $ref: '#/components/parameters/QueryLimit'
+      responses:
+        '200':
+          description: Paginated comment list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CommentResponse'
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+  /comments/{id}:
+    delete:
+      operationId: deleteComment
+      summary: Delete a comment (author or planet moderator only)
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Comment deleted
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [deleted]
+                        properties:
+                          deleted:
+                            type: boolean
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+  # =========================================================================
+  # Reactions
+  # =========================================================================
+  /posts/{id}/reactions:
+    post:
+      operationId: toggleReaction
+      summary: Toggle a reaction on a post (sending the same type again removes it)
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToggleReactionRequest'
+      responses:
+        '200':
+          description: Updated reaction counts
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ReactionResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+    get:
+      operationId: getPostReactions
+      summary: Get reaction counts and the caller's current reaction for a post
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Reaction summary
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ReactionResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+  # =========================================================================
+  # Saved Posts
+  # =========================================================================
+  /posts/{id}/save:
+    post:
+      operationId: savePost
+      summary: Save a post to the authenticated user's saved list
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '201':
+          description: Post saved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SavedPostEntry'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          $ref: '#/components/responses/409'
+
+    delete:
+      operationId: unsavePost
+      summary: Remove a post from the authenticated user's saved list
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Post unsaved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [unsaved]
+                        properties:
+                          unsaved:
+                            type: boolean
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+
+  /saved-posts:
+    get:
+      operationId: listSavedPosts
+      summary: List the authenticated user's saved posts (paginated)
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/QueryCursor'
+        - $ref: '#/components/parameters/QueryLimit'
+      responses:
+        '200':
+          description: Paginated saved-post list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SavedPostEntry'
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/401'
+
+  # =========================================================================
+  # Reports
+  # =========================================================================
+  /reports:
+    post:
+      operationId: createReport
+      summary: Submit a content or user report
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReportRequest'
+      responses:
+        '201':
+          description: Report submitted
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ReportResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+
+  # =========================================================================
+  # AI Jobs
+  # =========================================================================
+  /ai/jobs:
+    post:
+      operationId: createAiJob
+      summary: Submit an AI Auto-Log job
+      tags: [AI]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAiJobRequest'
+      responses:
+        '201':
+          description: Job queued (state QUEUED)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AiJobResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+
+    get:
+      operationId: listAiJobs
+      summary: List the authenticated user's own AI jobs (paginated)
+      tags: [AI]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/QueryCursor'
+        - $ref: '#/components/parameters/QueryLimit'
+        - name: state
+          in: query
+          schema:
+            $ref: '#/components/schemas/AiJobState'
+          description: Filter by job state.
+      responses:
+        '200':
+          description: Paginated job list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AiJobResponse'
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/401'
+
+  /ai/jobs/{id}:
+    get:
+      operationId: getAiJobById
+      summary: Get an AI job by ID (owner only)
+      tags: [AI]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: AI job detail with structured output when COMPLETED
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AiJobResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+  /ai/jobs/{id}/cancel:
+    post:
+      operationId: cancelAiJob
+      summary: Request cancellation of a queued or in-progress AI job (owner only)
+      tags: [AI]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Cancellation accepted (final state may still be CANCELLED or COMPLETED)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AiJobResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+  # =========================================================================
+  # Gamification
+  # =========================================================================
+  /points/me:
+    get:
+      operationId: getMyPointBalance
+      summary: Get the authenticated user's current point balance and rank
+      tags: [Gamification]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Point balance
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PointBalanceResponse'
+        '401':
+          $ref: '#/components/responses/401'
+
+  /points/transactions:
+    get:
+      operationId: listMyPointTransactions
+      summary: List the authenticated user's point transaction history (paginated)
+      tags: [Gamification]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/QueryCursor'
+        - $ref: '#/components/parameters/QueryLimit'
+      responses:
+        '200':
+          description: Paginated transaction ledger
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PointTransaction'
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/401'
+
+  /leaderboard:
+    get:
+      operationId: getLeaderboard
+      summary: Get the global leaderboard (paginated; data is from periodic snapshots)
+      tags: [Gamification]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/QueryCursor'
+        - $ref: '#/components/parameters/QueryLimit'
+      responses:
+        '200':
+          description: Leaderboard page
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/LeaderboardEntry'
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/401'
+
+  /influence/me:
+    get:
+      operationId: getMyInfluenceScore
+      summary: Get the authenticated user's Influence Score and breakdown
+      tags: [Gamification]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Influence Score with dimension breakdown
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/InfluenceScore'
+        '401':
+          $ref: '#/components/responses/401'
+
+  # =========================================================================
+  # Platform — Notifications
+  # =========================================================================
+  /notifications:
+    get:
+      operationId: listNotifications
+      summary: List the authenticated user's notifications (paginated)
+      tags: [Platform]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/QueryCursor'
+        - $ref: '#/components/parameters/QueryLimit'
+        - name: unreadOnly
+          in: query
+          schema:
+            type: boolean
+          description: When true, return only unread notifications.
+      responses:
+        '200':
+          description: Paginated notification list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/NotificationResponse'
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/401'
+
+  /notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      summary: Mark a notification as read
+      tags: [Platform]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/NotificationResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+  # =========================================================================
+  # Platform — Media
+  # =========================================================================
+  /media/upload:
+    post:
+      operationId: uploadMedia
+      summary: Upload a media file and receive a signed URL
+      tags: [Platform]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The file to upload (image or attachment).
+                purpose:
+                  type: string
+                  enum: [avatar, journal_attachment, post_attachment]
+                  description: Intended use — determines storage path and size limits.
+      responses:
+        '201':
+          description: File uploaded; signed URL returned with expiry
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/MediaUploadResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+
+  /media/{id}/url:
+    get:
+      operationId: getMediaSignedUrl
+      summary: Get a fresh signed URL for a previously uploaded media object
+      tags: [Platform]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Fresh signed URL
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/MediaUploadResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+  # =========================================================================
+  # Health
+  # =========================================================================
+  /health:
+    get:
+      operationId: healthCheck
+      summary: API health check
+      tags: []
+      security: []
+      responses:
+        '200':
+          description: Service is running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'

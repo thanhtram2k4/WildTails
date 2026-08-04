@@ -1,7 +1,853 @@
+// =============================================================================
+// WildTails – Catalyst Verse
+// Prisma Schema Draft — Phase 02
+// Status: DRAFT (no migration has been run)
+// =============================================================================
+
 generator client {
   provider = "prisma-client-js"
 }
 
+// In Prisma 7 the connection URL is configured in prisma.config.ts, not here.
 datasource db {
   provider = "postgresql"
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+/// Platform-level role for the User record.
+/// ADMIN has access to audit logs, moderation actions, and system config.
+enum UserRole {
+  USER
+  ADMIN
+}
+
+/// Visibility policy for a Journal entry.
+/// PRIVATE    – owner only.
+/// SELECTED_USERS – explicit SharePermission rows required.
+/// PLANET_MEMBERS – any member of the linked planet.
+/// PUBLIC     – every authenticated user.
+enum JournalVisibility {
+  PRIVATE
+  SELECTED_USERS
+  PLANET_MEMBERS
+  PUBLIC
+}
+
+/// Role of a user within a specific planet.
+enum PlanetRole {
+  OWNER
+  ADMIN
+  MODERATOR
+  MEMBER
+}
+
+/// State machine for an AI processing job.
+enum AiJobState {
+  QUEUED
+  FETCHING_SOURCE
+  PREPROCESSING
+  SUMMARIZING
+  CLASSIFYING
+  SAVING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+/// Phase of a Space Dice game session.
+enum GamePhase {
+  WAITING
+  STARTING
+  ROLLING
+  QUESTION
+  VOTING
+  RESULT
+  FINISHED
+}
+
+/// Source event that generated a point transaction.
+enum PointSource {
+  POST_CREATE
+  COMMENT_CREATE
+  REACTION_GIVE
+  GAME_WIN
+  GAME_PARTICIPATE
+  AI_LOG_CREATE
+  GOAL_COMPLETE
+  DAILY_LOGIN
+  MODERATION_PENALTY
+}
+
+/// Type of content a Post shares.
+enum PostType {
+  ORIGINAL
+  JOURNAL_SHARE
+  GOAL_UPDATE
+}
+
+/// Type of reaction a user may give to a Post.
+enum ReactionType {
+  LIKE
+  INSIGHTFUL
+  SUPPORTIVE
+  FUNNY
+}
+
+/// Type of content being reported.
+enum ReportTargetType {
+  POST
+  COMMENT
+  USER
+}
+
+/// Moderation status of a Report.
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  DISMISSED
+  ACTIONED
+}
+
+// =============================================================================
+// IDENTITY DOMAIN
+// =============================================================================
+
+/// Core user record. Passwords are stored as bcrypt hashes — never the raw value.
+/// Soft delete via deletedAt; purge after 30-day retention window (D10).
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  /// bcrypt hash. Do not log or expose.
+  passwordHash    String
+  displayName     String
+  bio             String?
+  avatarUrl       String?
+  role            UserRole  @default(USER)
+  isActive        Boolean   @default(true)
+  emailVerifiedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  /// Soft delete timestamp (D10). Null means not deleted.
+  deletedAt       DateTime?
+
+  // Relations – Identity
+  refreshTokens RefreshToken[]
+  following     Follow[]       @relation("Follower")
+  followers     Follow[]       @relation("Following")
+  blocking      Block[]        @relation("Blocker")
+  blockedBy     Block[]        @relation("Blocked")
+
+  // Relations – Planet
+  planetMemberships PlanetMembership[]
+  planetRulesUpdated PlanetRule[]
+
+  // Relations – Knowledge
+  journals         Journal[]
+  journalVersions  JournalVersion[]
+  ownedTags        Tag[]
+  ownedFolders     Folder[]
+  sharePermissionsGranted   SharePermission[] @relation("GrantedBy")
+  sharePermissionsReceived  SharePermission[] @relation("GrantedTo")
+  goals            Goal[]
+
+  // Relations – Social
+  posts          Post[]
+  comments       Comment[]
+  reactions      Reaction[]
+  savedPosts     SavedPost[]
+  reports        Report[]    @relation("Reporter")
+  reviewedReports Report[]   @relation("Reviewer")
+
+  // Relations – AI
+  aiJobs AiJob[]
+
+  // Relations – Game
+  gameParticipations GameParticipant[]
+  gameVotesGiven     GameVote[]        @relation("Voter")
+  gameVotesReceived  GameVote[]        @relation("VoteTarget")
+  gameEvents         GameEvent[]
+
+  // Relations – Gamification
+  pointTransactions PointTransaction[]
+  influenceScore    InfluenceScore?
+  dailyPointCaps    DailyPointCap[]
+
+  // Relations – Platform
+  notifications Notification[]
+  media         Media[]
+  auditLogs     AuditLog[]
+
+  @@index([email])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+/// DB-backed refresh token for rotation and replay detection (D02, ADR-002).
+/// On reuse of a superseded token: revoke the entire family.
+model RefreshToken {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Stored as a hash (SHA-256 of the raw token). Never store the raw token.
+  tokenHash String    @unique
+  /// UUID that groups all tokens in a rotation chain.
+  /// If any token in the family is replayed, the whole family is revoked.
+  family    String
+  expiresAt DateTime
+  revokedAt DateTime?
+  /// Points to the successor token when this one has been rotated out.
+  replacedByTokenId String?
+  createdAt         DateTime @default(now())
+
+  @@index([tokenHash])
+  @@index([family])
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+/// User A follows User B.
+/// Constraint: cannot follow yourself (enforced at service layer + CHECK in migration).
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("follows")
+}
+
+/// User A blocks User B.
+/// Constraint: cannot block yourself (enforced at service layer).
+model Block {
+  id        String   @id @default(uuid())
+  blockerId String
+  blocker   User     @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockedId String
+  blocked   User     @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+  @@map("blocks")
+}
+
+// =============================================================================
+// PLANET DOMAIN
+// =============================================================================
+
+/// A themed community space. 8 default planets are seeded at startup (D-M).
+/// Default planets are owned by the system (isDefault=true).
+model Planet {
+  id          String   @id @default(uuid())
+  name        String
+  /// URL-safe identifier, e.g. "learning", "sports".
+  slug        String   @unique
+  description String?
+  iconUrl     String?
+  /// True for the 8 fixed system planets. False for user-created (P2).
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  memberships PlanetMembership[]
+  rules       PlanetRule[]
+  journals    Journal[]
+  folders     Folder[]
+  posts       Post[]
+  goals       Goal[]
+
+  @@index([slug])
+  @@map("planets")
+}
+
+/// Membership record linking a user to a planet with a specific role.
+model PlanetMembership {
+  id       String     @id @default(uuid())
+  planetId String
+  planet   Planet     @relation(fields: [planetId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role     PlanetRole @default(MEMBER)
+  joinedAt DateTime   @default(now())
+  /// Null means currently active. Set when the user leaves or is removed.
+  leftAt   DateTime?
+
+  @@unique([planetId, userId])
+  @@index([planetId])
+  @@index([userId])
+  @@map("planet_memberships")
+}
+
+/// Key-value configuration rules for a planet (e.g., posting policy).
+model PlanetRule {
+  id          String   @id @default(uuid())
+  planetId    String
+  planet      Planet   @relation(fields: [planetId], references: [id], onDelete: Cascade)
+  key         String
+  value       String
+  updatedById String
+  updatedBy   User     @relation(fields: [updatedById], references: [id])
+  updatedAt   DateTime @updatedAt
+
+  @@unique([planetId, key])
+  @@index([planetId])
+  @@map("planet_rules")
+}
+
+// =============================================================================
+// KNOWLEDGE DOMAIN
+// =============================================================================
+
+/// Journal entry. Default visibility is PRIVATE (D-N). Soft delete via deletedAt.
+/// The backend MUST check ownerId and visibility before returning body content.
+model Journal {
+  id         String            @id @default(uuid())
+  title      String
+  /// The journal body. Do NOT log this field.
+  body       String?
+  ownerId    String
+  owner      User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  planetId   String?
+  planet     Planet?           @relation(fields: [planetId], references: [id])
+  folderId   String?
+  folder     Folder?           @relation(fields: [folderId], references: [id])
+  visibility JournalVisibility @default(PRIVATE)
+  goalId     String?
+  goal       Goal?             @relation(fields: [goalId], references: [id])
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  /// Soft delete (D10). Non-null means logically deleted.
+  deletedAt  DateTime?
+
+  // Relations
+  versions         JournalVersion[]
+  tags             JournalTag[]
+  sharePermissions SharePermission[]
+  aiOutput         AiOutput?
+  posts            Post[]
+
+  @@index([ownerId, createdAt(sort: Desc)])
+  @@index([ownerId, visibility])
+  @@index([planetId])
+  @@index([deletedAt])
+  @@map("journals")
+}
+
+/// Immutable version record created on every save/edit of a journal.
+model JournalVersion {
+  id        String   @id @default(uuid())
+  journalId String
+  journal   Journal  @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  title     String
+  /// Snapshot of journal body at this version. Do NOT log this field.
+  body      String?
+  editedById String
+  editedBy  User     @relation(fields: [editedById], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([journalId])
+  @@map("journal_versions")
+}
+
+/// Tag entity. Tags are scoped per user; the same name may exist for different owners.
+model Tag {
+  id        String       @id @default(uuid())
+  name      String
+  ownerId   String
+  owner     User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+
+  journals JournalTag[]
+
+  @@unique([ownerId, name])
+  @@index([ownerId])
+  @@map("tags")
+}
+
+/// Many-to-many join between Journal and Tag. Composite PK enforces no duplicates.
+model JournalTag {
+  journalId String
+  journal   Journal @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  tagId     String
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([journalId, tagId])
+  @@map("journal_tags")
+}
+
+/// Folder for organizing journals. Supports self-referential nesting.
+model Folder {
+  id        String   @id @default(uuid())
+  name      String
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  /// Parent folder for nesting. Null means root-level.
+  parentId  String?
+  parent    Folder?  @relation("FolderParent", fields: [parentId], references: [id])
+  children  Folder[] @relation("FolderParent")
+  planetId  String?
+  planet    Planet?  @relation(fields: [planetId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  journals Journal[]
+
+  @@index([ownerId])
+  @@index([parentId])
+  @@map("folders")
+}
+
+/// Explicit permission granting a specific user access to a private journal.
+/// Used when visibility = SELECTED_USERS.
+/// Revoke by setting revokedAt. Expiry is optional.
+model SharePermission {
+  id               String    @id @default(uuid())
+  journalId        String
+  journal          Journal   @relation(fields: [journalId], references: [id], onDelete: Cascade)
+  grantedToUserId  String
+  grantedTo        User      @relation("GrantedTo", fields: [grantedToUserId], references: [id], onDelete: Cascade)
+  grantedByUserId  String
+  grantedBy        User      @relation("GrantedBy", fields: [grantedByUserId], references: [id])
+  expiresAt        DateTime?
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@index([journalId])
+  @@index([grantedToUserId])
+  @@map("share_permissions")
+}
+
+/// User goal. Progress is an integer 0–100. Completion must not be auto-triggered by AI.
+model Goal {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  /// Integer 0 to 100. Validated at service layer.
+  progress    Int      @default(0)
+  deadline    DateTime?
+  planetId    String?
+  planet      Planet?  @relation(fields: [planetId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  journals Journal[]
+  posts    Post[]
+
+  @@index([ownerId])
+  @@map("goals")
+}
+
+// =============================================================================
+// SOCIAL DOMAIN
+// =============================================================================
+
+/// Public post on a planet feed. Soft delete via deletedAt.
+model Post {
+  id        String   @id @default(uuid())
+  body      String
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  planetId  String
+  planet    Planet   @relation(fields: [planetId], references: [id])
+  type      PostType @default(ORIGINAL)
+  /// Set when type = JOURNAL_SHARE. The journal body is NOT copied here.
+  journalId String?
+  journal   Journal? @relation(fields: [journalId], references: [id])
+  goalId    String?
+  goal      Goal?    @relation(fields: [goalId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  /// Soft delete (D10).
+  deletedAt DateTime?
+
+  comments  Comment[]
+  reactions Reaction[]
+  savedBy   SavedPost[]
+  reports   Report[]
+
+  @@index([planetId, createdAt(sort: Desc)])
+  @@index([authorId, createdAt(sort: Desc)])
+  @@index([deletedAt])
+  @@map("posts")
+}
+
+/// Comment on a post. Supports nested replies via self-reference. Soft delete.
+model Comment {
+  id        String   @id @default(uuid())
+  body      String
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  /// Null for top-level comments. Set for replies.
+  parentId  String?
+  parent    Comment? @relation("CommentParent", fields: [parentId], references: [id])
+  children  Comment[] @relation("CommentParent")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  /// Soft delete (D10).
+  deletedAt DateTime?
+
+  reports Report[]
+
+  @@index([postId])
+  @@index([parentId])
+  @@index([deletedAt])
+  @@map("comments")
+}
+
+/// A user's reaction to a post. One reaction per user per post (unique constraint).
+/// Self-reaction does not generate influence points (enforced at service layer).
+model Reaction {
+  id        String       @id @default(uuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String
+  post      Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  type      ReactionType
+  createdAt DateTime     @default(now())
+
+  @@unique([userId, postId])
+  @@index([postId])
+  @@map("reactions")
+}
+
+/// Bookmark: user saves a post for later. One save per user per post.
+model SavedPost {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+  @@index([userId])
+  @@map("saved_posts")
+}
+
+/// Moderation report. targetId is polymorphic — refer to targetType to determine the table.
+/// reviewedBy is only set after a moderator/admin takes action.
+model Report {
+  id           String           @id @default(uuid())
+  reporterId   String
+  reporter     User             @relation("Reporter", fields: [reporterId], references: [id])
+  targetType   ReportTargetType
+  /// Polymorphic FK: the ID of the reported Post, Comment, or User.
+  targetId     String
+  reason       String
+  description  String?
+  status       ReportStatus     @default(PENDING)
+  reviewedById String?
+  reviewedBy   User?            @relation("Reviewer", fields: [reviewedById], references: [id])
+  reviewedAt   DateTime?
+  createdAt    DateTime         @default(now())
+
+  /// Convenience relation for post reports (only populated when targetType = POST).
+  post    Post?    @relation(fields: [targetId], references: [id], map: "report_post_fk")
+  /// Convenience relation for comment reports (only populated when targetType = COMMENT).
+  comment Comment? @relation(fields: [targetId], references: [id], map: "report_comment_fk")
+
+  @@index([targetType, targetId])
+  @@index([status])
+  @@index([reporterId])
+  @@map("reports")
+}
+
+// =============================================================================
+// AI DOMAIN
+// =============================================================================
+
+/// AI processing job. Only the ownerId user may view status and output (privacy rule).
+/// idempotencyKey derived from (userId, sourceUrl/transcriptHash, promptVersion).
+model AiJob {
+  id               String     @id @default(uuid())
+  ownerId          String
+  owner            User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  state            AiJobState @default(QUEUED)
+  /// External URL of the video/audio source.
+  sourceUrl        String?
+  /// Manual transcript entered by the user. Treated as untrusted input.
+  manualTranscript String?
+  promptVersion    String
+  /// Derived from (ownerId, source fingerprint, promptVersion). Prevents duplicate jobs.
+  idempotencyKey   String     @unique
+  modelName        String?
+  tokenUsage       Int?
+  latencyMs        Int?
+  errorCode        String?
+  /// Do not expose internal structure in this message to the client.
+  errorMessage     String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  completedAt      DateTime?
+
+  steps  AiJobStep[]
+  output AiOutput?
+
+  @@index([ownerId, state])
+  @@index([idempotencyKey])
+  @@map("ai_jobs")
+}
+
+/// Step-level audit trail for an AI job's state transitions.
+model AiJobStep {
+  id           String     @id @default(uuid())
+  jobId        String
+  job          AiJob      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  state        AiJobState
+  startedAt    DateTime   @default(now())
+  completedAt  DateTime?
+  errorMessage String?
+
+  @@index([jobId])
+  @@map("ai_job_steps")
+}
+
+/// Structured output from the AI job. Always a draft — never auto-published (D-O).
+/// journalId is set after the user explicitly accepts and saves the draft as a journal.
+model AiOutput {
+  id          String   @id @default(uuid())
+  jobId       String   @unique
+  job         AiJob    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  title       String
+  summary     String
+  /// Validated JSON array of key point strings.
+  keyPoints   Json
+  /// Validated JSON array of tag strings.
+  tags        Json
+  category    String?
+  /// Validated JSON array of action item strings. Null if none suggested.
+  actionItems Json?
+  /// Set only after the user explicitly creates a journal from this draft.
+  journalId   String?  @unique
+  journal     Journal? @relation(fields: [journalId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@index([jobId])
+  @@map("ai_outputs")
+}
+
+// =============================================================================
+// GAME DOMAIN (Space Dice)
+// =============================================================================
+
+/// A Space Dice game session. Active state lives in Redis; this is the durable record.
+/// roomId is the stable identifier clients use to join (matches Redis key prefix).
+model GameSession {
+  id           String    @id @default(uuid())
+  roomId       String    @unique
+  phase        GamePhase @default(WAITING)
+  currentRound Int       @default(0)
+  maxRounds    Int       @default(3)
+  /// userId of the participant whose turn it currently is.
+  currentTurn  String?
+  startedAt    DateTime?
+  finishedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  participants GameParticipant[]
+  questions    GameQuestion[]
+  events       GameEvent[]
+
+  @@index([roomId])
+  @@map("game_sessions")
+}
+
+/// A player in a game session. Score is the accumulated points within the session.
+model GameParticipant {
+  id          String      @id @default(uuid())
+  sessionId   String
+  session     GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  score       Int         @default(0)
+  isConnected Boolean     @default(true)
+  joinedAt    DateTime    @default(now())
+
+  @@unique([sessionId, userId])
+  @@index([sessionId])
+  @@index([userId])
+  @@map("game_participants")
+}
+
+/// A question generated for a specific round of a game session.
+model GameQuestion {
+  id           String      @id @default(uuid())
+  sessionId    String
+  session      GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  round        Int
+  questionText String
+  createdAt    DateTime    @default(now())
+
+  votes GameVote[]
+
+  @@index([sessionId])
+  @@map("game_questions")
+}
+
+/// A vote cast by one player targeting another player's answer to a question.
+/// One vote per voter per question (unique constraint).
+model GameVote {
+  id             String       @id @default(uuid())
+  questionId     String
+  question       GameQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  voterId        String
+  voter          User         @relation("Voter", fields: [voterId], references: [id])
+  targetUserId   String
+  targetUser     User         @relation("VoteTarget", fields: [targetUserId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  @@unique([questionId, voterId])
+  @@index([questionId])
+  @@map("game_votes")
+}
+
+/// Immutable event log for a game session. payload is typed at the application layer.
+model GameEvent {
+  id        String      @id @default(uuid())
+  sessionId String
+  session   GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  /// Null for system-generated events (e.g., timeout, dice roll).
+  userId    String?
+  user      User?       @relation(fields: [userId], references: [id])
+  type      String
+  payload   Json
+  createdAt DateTime    @default(now())
+
+  @@index([sessionId])
+  @@map("game_events")
+}
+
+// =============================================================================
+// GAMIFICATION DOMAIN
+// =============================================================================
+
+/// Every point change must create a row here. No direct balance field on User.
+/// referenceId + referenceType identify the source entity (post, game session, etc).
+model PointTransaction {
+  id            String      @id @default(uuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Positive = earned, negative = penalty.
+  amount        Int
+  source        PointSource
+  /// ID of the entity that triggered the transaction (post, session, etc.).
+  referenceId   String?
+  /// Type name of the reference entity, e.g. "Post", "GameSession".
+  referenceType String?
+  description   String?
+  createdAt     DateTime    @default(now())
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("point_transactions")
+}
+
+/// Periodic snapshot of a user's multi-dimensional influence score.
+/// Leaderboard is built from this table, not from real-time computation.
+model InfluenceScore {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score            Float
+  contentScore     Float
+  engagementScore  Float
+  consistencyScore Float
+  gameScore        Float
+  penaltyScore     Float
+  calculatedAt     DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([score(sort: Desc)])
+  @@map("influence_scores")
+}
+
+/// Guards the daily point earning cap. One row per user per calendar day.
+/// date stores the local date (UTC midnight recommended for consistency).
+model DailyPointCap {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Calendar date (UTC midnight). No time component needed.
+  date         DateTime @db.Date
+  totalEarned  Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@map("daily_point_caps")
+}
+
+// =============================================================================
+// PLATFORM DOMAIN
+// =============================================================================
+
+/// In-app notification for a user. referenceId + referenceType are polymorphic.
+model Notification {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          String
+  title         String
+  body          String?
+  referenceId   String?
+  referenceType String?
+  isRead        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([userId, isRead, createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+/// Metadata record for an uploaded file. The actual object lives in MinIO/S3 (D-I).
+/// Signed URLs must have an expiry before the objectKey is returned to the client.
+model Media {
+  id               String   @id @default(uuid())
+  ownerId          String
+  owner            User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  bucket           String
+  /// Path within the bucket. Combined with bucket to locate the object.
+  objectKey        String
+  mimeType         String
+  sizeBytes        BigInt
+  originalFilename String?
+  createdAt        DateTime @default(now())
+
+  @@index([ownerId])
+  @@map("media")
+}
+
+/// Immutable audit record. userId may be null for system-generated events.
+/// Do NOT write private journal body, passwords, or tokens into metadata.
+model AuditLog {
+  id           String   @id @default(uuid())
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action       String
+  targetType   String?
+  targetId     String?
+  /// Structured context. Sensitive fields must be omitted.
+  metadata     Json?
+  /// Source IP for accountability. May be null for internal events.
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([targetType, targetId])
+  @@map("audit_logs")
 }
