@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { AvatarConfigSchema } from './avatar.js';
 
 /** Full profile for the authenticated user (GET /users/me). Includes email. */
 export const UserProfileResponseSchema = z.object({
@@ -8,6 +9,7 @@ export const UserProfileResponseSchema = z.object({
   avatarUrl: z.string().url().optional(),
   bio: z.string().max(500).optional(),
   joinedAt: z.string().datetime(),
+  avatarConfig: z.unknown().optional(),
 });
 
 export type UserProfileResponse = z.infer<typeof UserProfileResponseSchema>;
@@ -19,6 +21,7 @@ export const PublicUserProfileResponseSchema = z.object({
   avatarUrl: z.string().url().optional(),
   bio: z.string().max(500).optional(),
   joinedAt: z.string().datetime(),
+  avatarConfig: z.unknown().optional(),
 });
 
 export type PublicUserProfileResponse = z.infer<typeof PublicUserProfileResponseSchema>;
@@ -28,6 +31,7 @@ export const UpdateUserProfileRequestSchema = z.object({
   bio: z.string().max(500).optional(),
   /** Signed URL pointing to an already-uploaded avatar in object storage. */
   avatarUrl: z.string().url().optional(),
+  avatarConfig: AvatarConfigSchema.optional(),
 });
 
 export type UpdateUserProfileRequest = z.infer<typeof UpdateUserProfileRequestSchema>;

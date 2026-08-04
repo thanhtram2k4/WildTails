@@ -115,16 +115,18 @@ enum ReportStatus {
 // IDENTITY DOMAIN
 // =============================================================================
 
-/// Core user record. Passwords are stored as bcrypt hashes — never the raw value.
+/// Core user record. Passwords are stored as argon2id hashes — never the raw value.
 /// Soft delete via deletedAt; purge after 30-day retention window (D10).
 model User {
   id              String    @id @default(uuid())
   email           String    @unique
-  /// bcrypt hash. Do not log or expose.
+  /// argon2id hash. Do not log or expose.
   passwordHash    String
   displayName     String
   bio             String?
   avatarUrl       String?
+  /// Layered avatar configuration. Validated against AvatarConfigSchema at service layer.
+  avatarConfig    Json?
   role            UserRole  @default(USER)
   isActive        Boolean   @default(true)
   emailVerifiedAt DateTime?
@@ -201,6 +203,10 @@ model RefreshToken {
   revokedAt DateTime?
   /// Points to the successor token when this one has been rotated out.
   replacedByTokenId String?
+  /// Timestamp when this token was rotated out. Used to distinguish a
+  /// concurrent in-flight refresh (within the grace interval) from a
+  /// genuine later replay. See REFRESH_ROTATION_GRACE_MS in auth.constants.
+  replacedAt        DateTime?
   createdAt         DateTime @default(now())
 
   @@index([tokenHash])

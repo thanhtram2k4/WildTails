@@ -2,29 +2,29 @@
 
 ## Current phase
 
-- Phase: 02
+- Phase: 03
 - Status: DONE
-- Active branch: phase/02-architecture-and-contracts
-- Last verified commit: 0e9c1a4
+- Active branch: phase/03-identity-and-planets
+- Last verified commit: b3852c9
 - Updated at: 2026-08-04
 
 ## Phase checklist
 
-| Phase | Name                           | Status           | Human approval      |
-| ----- | ------------------------------ | ---------------- | ------------------- |
-| 00    | Project audit and decisions    | DONE             | Approved 2026-07-31 |
-| 01    | Repository bootstrap           | DONE             | Approved 2026-08-03 |
-| 02    | Architecture and contracts     | DONE             | Approved 2026-08-04 |
-| 03    | Identity and planets           | NOT_STARTED      | Required            |
-| 04    | Captain's Cabin and goals      | NOT_STARTED      | Required            |
-| 05    | Planet Feed and moderation     | NOT_STARTED      | Required            |
-| 06    | AI Auto-Log                    | NOT_STARTED      | Required            |
-| 07    | Gamification                   | NOT_STARTED      | Required            |
-| 08    | Real-time Space Dice           | NOT_STARTED      | Required            |
-| 09    | Security hardening             | NOT_STARTED      | Required            |
-| 10    | Testing and evaluation         | NOT_STARTED      | Required            |
-| 11    | DevOps and observability       | NOT_STARTED      | Required            |
-| 12    | Final demo and thesis evidence | NOT_STARTED      | Required            |
+| Phase | Name                           | Status      | Human approval      |
+| ----- | ------------------------------ | ----------- | ------------------- |
+| 00    | Project audit and decisions    | DONE        | Approved 2026-07-31 |
+| 01    | Repository bootstrap           | DONE        | Approved 2026-08-03 |
+| 02    | Architecture and contracts     | DONE        | Approved 2026-08-04 |
+| 03    | Identity and planets           | DONE        | Approved 2026-08-04 |
+| 04    | Captain's Cabin and goals      | NOT_STARTED | Required            |
+| 05    | Planet Feed and moderation     | NOT_STARTED | Required            |
+| 06    | AI Auto-Log                    | NOT_STARTED | Required            |
+| 07    | Gamification                   | NOT_STARTED | Required            |
+| 08    | Real-time Space Dice           | NOT_STARTED | Required            |
+| 09    | Security hardening             | NOT_STARTED | Required            |
+| 10    | Testing and evaluation         | NOT_STARTED | Required            |
+| 11    | DevOps and observability       | NOT_STARTED | Required            |
+| 12    | Final demo and thesis evidence | NOT_STARTED | Required            |
 
 Valid statuses:
 
@@ -59,6 +59,44 @@ None.
 
 ## Latest test evidence
 
+Phase 03 – Identity and Planets (2026-08-04):
+
+- Install: pnpm install --frozen-lockfile passes
+- Lint: 9 packages pass ESLint (0 errors)
+- Format: all files pass Prettier
+- Typecheck: 9 packages pass tsc --noEmit (strict mode, 0 errors)
+- Tests: 95 total across 12 files, all pass
+  - contracts.spec: 13 tests
+  - worker.spec: 1 test
+  - health.controller.spec: 1 test
+  - zod-validation.pipe.spec: 6 tests (Zod 4 API)
+  - http-exception.filter.spec: 8 tests (ApiErrorEnvelope)
+  - auth.service.spec: 11 tests (register, login, refresh rotation, logout)
+  - user.service.spec: 8 tests (profile, avatar config, cross-account denial)
+  - planet.service.spec: 13 tests (list, join, leave, rejoin D15, cross-user)
+  - auth.integration.spec: 12 tests (DB-backed: concurrent refresh with grace interval,
+    DB row verification, winner successor validity, genuine replay after 11s wait,
+    DB family revocation query, committed revocation proof)
+  - auth.spec (Playwright): 11 E2E tests (login, register, CSRF header, accessibility)
+  - onboarding-live.spec (Playwright): 7 live E2E tests (real register, login, cookie, CSRF)
+  - screenshots.spec (Playwright): 4 screenshot captures
+- Prisma: schema valid, client generated (v7.9.1), 2 migrations applied
+- Migrations: phase03_init (31 tables, 10 enums, 859 lines) + add_replaced_at (1 column)
+- Seed: 8 default planets, idempotent (ran twice, count asserted via psql)
+- Build: API (SWC 30 files), Web (webpack, 13 routes), Worker (SWC)
+- OpenAPI: valid (0 errors, 5 warnings)
+- Secrets: 172+ files scanned, false positives reviewed, no real secrets
+- Zod: only 4.4.3 across all packages
+- Framework independence: no @nestjs imports in packages/database/src/
+- NestJS routes: /auth/_, /users/_, /planets/*, /health (no /api prefix)
+- Concurrent refresh: 1 success + 1 failure, DB verified 0 revoked rows, winner valid
+- Genuine replay after 11s grace: 401, DB verified entire family revoked
+- Runtime health: Web (3100), API (3000), Worker (3001) all healthy
+- D09 visual direction: light theme, navy/teal/yellow palette, cat SVG identity
+- Screenshots: 6 captured from running application (D09 theme visible)
+- Cookie: HttpOnly wildtails_refresh on /api/auth, CSRF double-submit verified
+- Evidence: docs/evidence/phase-03/
+
 Phase 02 – Architecture and Contracts (2026-08-04):
 
 - Install: pnpm install --frozen-lockfile passes
@@ -79,9 +117,11 @@ Phase 02 – Architecture and Contracts (2026-08-04):
 - Vitest ESM-in-CJS config warning (cosmetic, no functional impact)
 - unplugin-swc esbuild deprecation warning (needs oxc:false in future vitest)
 - GitHub Actions versions not pinned to commit SHAs (supply chain risk, LOW)
-- @nestjs/config declared but unused (forward-looking, LOW)
 - Notification.type and GameEvent.type are String in Prisma, not enums (LOW, deferred)
 - No NotificationResponse Zod schema (deferred to Phase 05)
+- Next.js 16 build uses --webpack flag due to Turbopack .js→.ts extension resolution (LOW)
+- Planet descriptions are temporary product copy pending content approval (LOW)
+- Avatar visual assets are placeholder SVG — approved for MVP (2026-08-04)
 
 ## Manual work queue
 
