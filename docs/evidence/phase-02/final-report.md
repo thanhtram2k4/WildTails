@@ -33,17 +33,18 @@ Phase 02 froze the domain boundaries, API contracts, database schema, and archit
 
 ## Quality Gate Results
 
-| #   | Check           | Command                          | Result                  |
-| --- | --------------- | -------------------------------- | ----------------------- |
-| 1   | Install         | `pnpm install --frozen-lockfile` | Pass                    |
-| 2   | Lint            | `pnpm lint`                      | Pass (9 packages)       |
-| 3   | Format          | `pnpm format:check`              | Pass                    |
-| 4   | Typecheck       | `pnpm typecheck`                 | Pass (9 packages)       |
-| 5   | Test            | `pnpm test`                      | Pass (2/2)              |
-| 6   | Build           | `pnpm build`                     | Pass (API, Worker, Web) |
-| 7   | Prisma validate | `npx prisma validate`            | Pass                    |
-| 8   | Prisma generate | `npx prisma generate`            | Pass (v7.9.1)           |
-| 9   | Secret scan     | `node scripts/check-secrets.mjs` | Clean (71 files)        |
+| #   | Check           | Command                          | Result                            |
+| --- | --------------- | -------------------------------- | --------------------------------- |
+| 1   | Install         | `pnpm install --frozen-lockfile` | Pass                              |
+| 2   | Lint            | `pnpm lint`                      | Pass (9 packages)                 |
+| 3   | Format          | `pnpm format:check`              | Pass                              |
+| 4   | Typecheck       | `pnpm typecheck`                 | Pass (9 packages)                 |
+| 5   | Test            | `pnpm test`                      | Pass (15/15: 13 contract + 2 app) |
+| 6   | Build           | `pnpm build`                     | Pass (API, Worker, Web)           |
+| 7   | Prisma validate | `npx prisma validate`            | Pass (31 tables, 14 enums)        |
+| 8   | Prisma generate | `npx prisma generate`            | Pass (v7.9.1)                     |
+| 9   | OpenAPI lint    | `pnpm openapi:lint`              | Pass (0 errors, 5 warnings)       |
+| 10  | Secret scan     | `node scripts/check-secrets.mjs` | Clean (109 files)                 |
 
 ## QA/Security Review
 
@@ -63,22 +64,24 @@ Independent review by `qa-security-reviewer` agent. Overall verdict: **PASS_WITH
 
 ### Accepted findings (tracked for implementation phases)
 
-| ID   | Severity | Description                                         | Phase                                    |
-| ---- | -------- | --------------------------------------------------- | ---------------------------------------- |
-| F-05 | MEDIUM   | No separate admin-view AI job schema                | Phase 06                                 |
-| F-06 | MEDIUM   | `avatarUrl` accepts any URL, not just storage URLs  | Phase 03 (service-layer validation)      |
-| F-07 | MEDIUM   | `PlanetMembership` unique blocks rejoin after leave | Phase 03 (soft-delete or upsert pattern) |
-| F-10 | LOW      | `Notification.type` is String, not Prisma enum      | Phase 05 (implementation)                |
-| F-11 | LOW      | `GameEvent.type` is String, not Prisma enum         | Phase 08 (implementation)                |
-| F-13 | LOW      | No `NotificationResponse` Zod schema                | Phase 05 (implementation)                |
-| F-14 | INFO     | Leaderboard vs InfluenceScore naming                | Phase 07 (implementation)                |
-| F-15 | INFO     | Report.targetId polymorphic FK                      | Phase 05 (migration)                     |
+| ID   | Severity | Description                                        | Phase                                  |
+| ---- | -------- | -------------------------------------------------- | -------------------------------------- |
+| F-05 | MEDIUM   | No separate admin-view AI job schema               | Phase 06                               |
+| F-06 | MEDIUM   | `avatarUrl` accepts any URL, not just storage URLs | Phase 03 (service-layer validation)    |
+| F-07 | MEDIUM   | `PlanetMembership` rejoin lifecycle                | RESOLVED (D15: rejoin reactivates row) |
+| F-10 | LOW      | `Notification.type` is String, not Prisma enum     | Phase 05 (implementation)              |
+| F-11 | LOW      | `GameEvent.type` is String, not Prisma enum        | Phase 08 (implementation)              |
+| F-13 | LOW      | No `NotificationResponse` Zod schema               | Phase 05 (implementation)              |
+| F-14 | INFO     | Leaderboard vs InfluenceScore naming               | Phase 07 (implementation)              |
+| F-15 | INFO     | Report.targetId polymorphic FK                     | Phase 05 (migration)                   |
 
 ## Dependencies Added
 
-| Package | Version | Location             |
-| ------- | ------- | -------------------- |
-| zod     | ^3.x    | `packages/contracts` |
+| Package      | Version | Location                      |
+| ------------ | ------- | ----------------------------- |
+| zod          | ^4.4.3  | `packages/contracts`          |
+| @redocly/cli | 1.34.3  | root (devDependency, pinned)  |
+| vitest       | ^4.1.10 | `packages/contracts` (devDep) |
 
 ## Security and Privacy Impact
 

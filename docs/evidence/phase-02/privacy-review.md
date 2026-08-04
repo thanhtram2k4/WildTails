@@ -29,7 +29,7 @@ Review checklist: contract correctness, Prisma schema invariants, privacy/securi
 ### F-01 — Email exposed on public user profile endpoint
 
 **Severity:** HIGH
-**Status:** OPEN
+**Status:** RESOLVED
 
 **Description:** `UserProfileResponse` declares `email` as a required field in both the Zod schema (`packages/contracts/src/identity/user.ts`, line 6) and the OpenAPI schema (`docs/api/openapi.yaml`, lines 221–228). The `GET /users/{id}` endpoint uses this same schema for the public profile view. The OpenAPI description explicitly states "email and private fields are omitted" but the schema contradicts this — `email` is in `required`. If implemented as-is, any authenticated user can enumerate the email addresses of all other users by iterating user IDs.
 
@@ -50,6 +50,14 @@ Review checklist: contract correctness, Prisma schema invariants, privacy/securi
 
 **Recommended fix:** Define a separate `PublicUserProfileResponseSchema` in the contracts that excludes `email` (and any other private fields). Update the OpenAPI `GET /users/{id}` path to reference this new schema. The `UserProfileResponse` (with email) should be used only for `GET /users/me`.
 
+**Resolution:**
+
+- Created `PublicUserProfileResponseSchema` in `packages/contracts/src/identity/user.ts` (excludes email).
+- Updated `GET /users/{id}` in `docs/api/openapi.yaml` to reference `PublicUserProfileResponse`.
+- `GET /users/me` retains `UserProfileResponse` (includes email).
+- Added contract test: `PublicUserProfileResponseSchema` does not accept email field.
+- Verified: `pnpm typecheck` passes; OpenAPI refs valid.
+
 **Missing test:** Negative test: authenticated user B calls `GET /users/A` and confirms the response does not contain user A's email address.
 
 ---
@@ -57,7 +65,7 @@ Review checklist: contract correctness, Prisma schema invariants, privacy/securi
 ### F-02 — Tag name global uniqueness violates stated comment
 
 **Severity:** HIGH
-**Status:** OPEN
+**Status:** RESOLVED
 
 **Description:** The Prisma `Tag` model has `name String @unique` (schema line 364), which enforces tag name uniqueness globally across all users. The comment on the model (line 362) states "same name may exist per owner", which is the correct business rule. The `@unique` constraint will cause a `UniqueConstraintViolation` the moment a second user creates a tag with the same name (e.g., two users both creating a tag called "learning"). This is a data integrity issue that blocks multi-user functionality and cannot be fixed without a migration.
 
@@ -75,6 +83,13 @@ Review checklist: contract correctness, Prisma schema invariants, privacy/securi
 
 **Recommended fix:** Replace `name String @unique` with `name String` and add `@@unique([ownerId, name])` to the model. This accurately reflects the stated business invariant.
 
+**Resolution:**
+
+- Removed `@unique` from `Tag.name` in `packages/database/prisma/schema.prisma`.
+- Added `@@unique([ownerId, name])` to the `Tag` model.
+- Updated model comment to "Tags are scoped per user".
+- Verified: `npx prisma validate` passes.
+
 **Missing test:** Integration test: two different users both create tags with the same name and both succeed.
 
 ---
@@ -82,7 +97,7 @@ Review checklist: contract correctness, Prisma schema invariants, privacy/securi
 ### F-03 — CreateAiJobRequest allows empty request body (no source validation)
 
 **Severity:** HIGH
-**Status:** OPEN
+**Status:** RESOLVED
 
 **Description:** `CreateAiJobRequestSchema` in `packages/contracts/src/ai/ai-job.ts` declares all three fields as optional: `sourceUrl`, `manualTranscript`, and `promptVersion`. There is no `.refine()` or `.superRefine()` validator ensuring that at least one of `sourceUrl` or `manualTranscript` is provided, and no constraint preventing both from being set simultaneously. The OpenAPI description says "One of sourceUrl or manualTranscript must be provided" but this is a comment only — not enforced at the contract layer. A request with neither field will reach the worker and likely cause a crash or an unhelpful `FAILED` state rather than a clear `VALIDATION_ERROR`.
 
@@ -113,6 +128,13 @@ The mutually exclusive concern is also unaddressed: if a user provides both, the
 
 Also add a `discriminator` or `oneOf` in the OpenAPI schema to formally encode the mutual exclusion.
 
+**Resolution:**
+
+- Added `.refine()` to `CreateAiJobRequestSchema` in `packages/contracts/src/ai/ai-job.ts` enforcing exactly one of `sourceUrl` or `manualTranscript`.
+- Updated OpenAPI `CreateAiJobRequest` to use `oneOf` with two variants enforcing mutual exclusivity.
+- Added contract tests: empty body rejected, both fields rejected, each alone accepted.
+- Verified: `pnpm typecheck` passes.
+
 **Missing test:** Unit test: `CreateAiJobRequestSchema.parse({})` throws a validation error. Unit test: `CreateAiJobRequestSchema.parse({ sourceUrl: '...', manualTranscript: '...' })` throws a validation error.
 
 ---
@@ -120,7 +142,7 @@ Also add a `discriminator` or `oneOf` in the OpenAPI schema to formally encode t
 ### F-04 — SharePermissionResponse omits revokedAt; revoke endpoint returns opaque boolean
 
 **Severity:** MEDIUM
-**Status:** OPEN
+**Status:** RESOLVED
 
 **Description:** `SharePermissionResponseSchema` (`packages/contracts/src/knowledge/share-permission.ts`) does not include a `revokedAt` field. ADR-003 states that "The revoke operation sets `revokedAt` to the current timestamp. There is no hard-delete of share permission rows; the audit trail must be preserved." Without `revokedAt` in the response, the journal owner has no way to see whether a permission was previously granted and then revoked (versus never granted). This also prevents the UI from distinguishing active from revoked permissions in the list returned by `GET /journals/{id}/shares`.
 
@@ -199,7 +221,7 @@ The contract comment says "Only the job owner may receive this" but there is no 
 ### F-07 — PlanetMembership allows re-joining without clearing leftAt (soft-delete gap)
 
 **Severity:** MEDIUM
-**Status:** OPEN
+**Status:** RESOLVED
 
 **Description:** The `PlanetMembership` model uses `@@unique([planetId, userId])`, which is correct for preventing duplicate memberships. However, `leftAt` is used as a soft-delete indicator (null = active, non-null = left). When a user leaves and then rejoins a planet, the existing membership row has `leftAt` set, but `@@unique([planetId, userId])` means a new row cannot be inserted — any re-join attempt will hit a unique constraint violation. The schema does not provide a mechanism for re-joining (e.g., setting `leftAt` back to null on the existing row), and the contracts do not address this lifecycle.
 
@@ -221,6 +243,16 @@ The `JoinPlanetRequestSchema` and `joinPlanet` endpoint do not acknowledge this 
 
 **Recommended fix:** Document in `PlanetMembershipResponse` that re-join reactivates the existing row. Add a contract note or a `rejoinedAt` field if the timestamp of re-joining is needed. Ensure the `joinPlanet` endpoint description clarifies that 409 is only returned when the user is already an active member (leftAt IS NULL), not when there is a historical row with leftAt set.
 
+**Resolution (D15):**
+
+- Added `leftAt` field to `PlanetMembershipResponseSchema` in `packages/contracts/src/planet/membership.ts`.
+- Updated Prisma schema comments documenting rejoin behavior.
+- Updated OpenAPI `POST /planets/{id}/join` description with rejoin semantics.
+- Added rejoin rule to `docs/03-domain-rules.md`.
+- Added rejoin section to ADR-003.
+- Recorded as decision D15 in `docs/decisions-register.md`.
+- Added contract test for rejoin lifecycle.
+
 **Missing test:** Integration test: user joins planet, leaves, rejoins; membership is correctly reactivated and count is correct.
 
 ---
@@ -228,7 +260,7 @@ The `JoinPlanetRequestSchema` and `joinPlanet` endpoint do not acknowledge this 
 ### F-08 — JournalVersion body is required in the Zod schema but nullable in Prisma
 
 **Severity:** LOW
-**Status:** OPEN
+**Status:** RESOLVED
 
 **Description:** `JournalVersionSchema` in `packages/contracts/src/knowledge/journal.ts` (line 31) defines `body: z.string()` as required (non-optional). However, the Prisma `JournalVersion` model (schema line 353) declares `body String?` (nullable). If a journal was created without a body (title-only stub, which is explicitly supported per `Journal.body String?`), the corresponding `JournalVersion.body` will be `null`, but the Zod schema will fail parsing with a type error. This is a latent runtime bug at the boundary where the Prisma response is mapped to the contract response.
 
@@ -252,7 +284,7 @@ The `JoinPlanetRequestSchema` and `joinPlanet` endpoint do not acknowledge this 
 ### F-09 — AuditLog has no cascade-delete protection; userId FK allows silent nullification
 
 **Severity:** LOW
-**Status:** OPEN
+**Status:** RESOLVED
 
 **Description:** The `AuditLog` model (schema lines 835–850) defines `userId String?` with `User? @relation(fields: [userId], references: [id])`. There is no `onDelete` clause on the relation, which in Prisma defaults to `RESTRICT` when the FK is nullable. However, because `User` has `deletedAt` for soft-delete, no actual row deletion is expected in the user lifecycle. The concern is: if a hard-delete path is ever added for the 30-day retention window (D10 mentions purge), the absence of an explicit `onDelete` policy on `AuditLog.userId` is a documentation gap. The ERD notes that "AuditLog has no cascading deletes" but the schema does not explicitly model this as `onDelete: SetNull`. This could be confusing for implementers.
 
@@ -324,7 +356,7 @@ A second concern: `AuditLog.metadata Json?` has no schema type guidance. The com
 ### F-12 — Missing `@@unique` index on `PlanetRule` per-planet per-key
 
 **Severity:** LOW
-**Status:** OPEN
+**Status:** RESOLVED
 
 **Description:** `PlanetRule` (schema lines 293–305) stores key-value configuration for a planet. There is no `@@unique([planetId, key])` constraint, which means the same key can be inserted multiple times for the same planet. A seeding script or admin action that inserts a duplicate rule (e.g., setting `posting_policy` twice) would result in duplicate rows with no error, and the application would need to decide which row to use.
 
@@ -447,11 +479,13 @@ This is a documentation gap rather than a design error, since the ERD explicitly
 
 The Phase 02 architecture and contracts demonstrate sound privacy-first design decisions at the structural level: journal defaults to PRIVATE, the permission evaluation order is clearly defined in ADR-003, the refresh token stores only a hash, AI output is always a draft, points are ledger-only, and signed URLs carry expiry. The real-time game contracts correctly enforce server-authoritative state with no client-writable fields.
 
-Three findings of HIGH severity must be resolved before implementation begins:
+All three HIGH-severity findings have been resolved:
 
-1. **F-01** (email exposure on public profile) must be fixed in the Zod contracts and OpenAPI before any identity service is implemented, because fixing it post-implementation requires a breaking API change and frontend update.
-2. **F-02** (tag name global uniqueness) is a schema bug that will require a migration if not fixed now. Fixing it before the first migration run costs nothing.
-3. **F-03** (AI job empty-body request) must be enforced at the contract layer rather than relying on service-layer documentation alone.
+1. **F-01** (email exposure on public profile) — RESOLVED. `PublicUserProfileResponseSchema` created; OpenAPI updated.
+2. **F-02** (tag name global uniqueness) — RESOLVED. Changed to `@@unique([ownerId, name])`.
+3. **F-03** (AI job empty-body request) — RESOLVED. `.refine()` added to Zod; `oneOf` added to OpenAPI.
+
+Additionally resolved: F-04 (revokedAt added), F-07 (rejoin behavior documented per D15), F-08 (body optional), F-09 (onDelete: SetNull), F-12 (@@unique added).
 
 The remaining MEDIUM and LOW findings are design-level gaps that should be addressed in the migration plan and the implementation phase, but they do not block Phase 02 sign-off if tracked as known issues.
 

@@ -281,6 +281,8 @@ model PlanetMembership {
   role     PlanetRole @default(MEMBER)
   joinedAt DateTime   @default(now())
   /// Null means currently active. Set when the user leaves or is removed.
+  /// Rejoin (D15): clear leftAt, reset role to MEMBER, update joinedAt.
+  /// Do not create a duplicate row. Log leave/rejoin via AuditLog.
   leftAt   DateTime?
 
   @@unique([planetId, userId])

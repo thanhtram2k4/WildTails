@@ -32,3 +32,10 @@ export const RegisterRequestSchema = z.object({
 });
 
 export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;
+
+export const LogoutRequestSchema = z.object({
+  /** Raw refresh token to revoke — never log this field. */
+  refreshToken: z.string(),
+});
+
+export type LogoutRequest = z.infer<typeof LogoutRequestSchema>;

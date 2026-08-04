@@ -47,11 +47,11 @@ Decisions requiring future human approval:
 - [ ] Real email provider for staging.
 - [ ] Staging/production deployment.
 
-Phase 02 open design decisions (non-blocking for Phase 03):
+Phase 02 decisions resolved (D13-D15, approved 2026-08-04):
 
-- [ ] `/auth/logout` body: accept `{ refreshToken }` or use access token only?
-- [ ] `/ai/jobs/{id}/cancel` response: 200 or 202 Accepted?
-- [ ] `PlanetMembership` rejoin lifecycle after leave.
+- [x] D13: `/auth/logout` requires `{ refreshToken }` body + access token auth.
+- [x] D14: `/ai/jobs/{id}/cancel` returns 202 Accepted.
+- [x] D15: Rejoin reactivates existing row (leftAt=null, role=MEMBER, joinedAt=now).
 
 ## Active blockers
 
@@ -65,11 +65,13 @@ Phase 02 – Architecture and Contracts (2026-08-04):
 - Lint: 9 packages pass ESLint
 - Format: all files pass Prettier
 - Typecheck: 9 packages pass tsc --noEmit (strict mode)
-- Tests: 2 test files, 2 tests passed
+- Tests: 3 test files, 15 tests passed (13 contract + 2 app)
 - Prisma: schema valid (31 tables, 14 enums), client generated (v7.9.1)
+- OpenAPI: valid (0 errors, 5 warnings), @redocly/cli 1.34.3
 - Build: API (SWC), Worker (SWC), Web (Turbopack) all succeed
-- Secrets: 71 files scanned, clean
-- QA review: PASS_WITH_NOTES (3 HIGH fixed, 7 accepted for later phases)
+- Secrets: 109 files scanned, clean
+- QA review: PASS_WITH_NOTES (3 HIGH + 4 MEDIUM/LOW resolved, 6 accepted for later phases)
+- Decisions D13-D15 recorded and applied
 - Evidence: docs/evidence/phase-02/
 
 ## Known technical debt

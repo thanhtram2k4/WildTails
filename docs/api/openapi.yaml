@@ -81,8 +81,7 @@ components:
       required: [cursor, hasMore]
       properties:
         cursor:
-          type: string
-          nullable: true
+          type: ['string', 'null']
           description: Opaque cursor for the next page. Null when no further pages exist.
         hasMore:
           type: boolean
@@ -216,6 +215,14 @@ components:
           type: string
           description: Refresh token — never logged.
 
+    LogoutRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+          description: Raw refresh token to revoke. MUST NOT be logged.
+
     UserProfileResponse:
       type: object
       required: [id, email, displayName, joinedAt]
@@ -226,6 +233,28 @@ components:
         email:
           type: string
           format: email
+        displayName:
+          type: string
+        avatarUrl:
+          type: string
+          format: uri
+        bio:
+          type: string
+          maxLength: 500
+        joinedAt:
+          type: string
+          format: date-time
+
+    PublicUserProfileResponse:
+      type: object
+      description: >
+        Public-facing user profile. Excludes email and all other private or
+        internal fields. Safe to return to any authenticated caller.
+      required: [id, displayName, joinedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
         displayName:
           type: string
         avatarUrl:
@@ -311,6 +340,12 @@ components:
         joinedAt:
           type: string
           format: date-time
+        leftAt:
+          type: ['string', 'null']
+          format: date-time
+          description: >
+            Timestamp when the user last left the planet. Null when the membership
+            is active. Cleared (set to null) on rejoin.
 
     PlanetMemberEntry:
       type: object
@@ -470,9 +505,8 @@ components:
                 type: string
                 format: uuid
               expiresAt:
-                type: string
+                type: ['string', 'null']
                 format: date-time
-                nullable: true
           description: Active share permissions for SELECTED_USERS journals.
         createdAt:
           type: string
@@ -610,9 +644,8 @@ components:
           minimum: 0
           maximum: 100
         deadline:
-          type: string
+          type: ['string', 'null']
           format: date-time
-          nullable: true
         planetId:
           type: string
           format: uuid
@@ -661,11 +694,13 @@ components:
           format: uuid
           description: Must be the journal owner.
         expiresAt:
-          type: string
+          type: ['string', 'null']
           format: date-time
-          nullable: true
         createdAt:
           type: string
+          format: date-time
+        revokedAt:
+          type: ['string', 'null']
           format: date-time
 
     # ------ Social — Post ---------------------------------------------------
@@ -850,22 +885,38 @@ components:
 
     # ------ AI Jobs ---------------------------------------------------------
     CreateAiJobRequest:
-      type: object
-      description: One of sourceUrl or manualTranscript must be provided.
-      properties:
-        sourceUrl:
-          type: string
-          format: uri
-          description: Public URL to fetch and process. Mutually exclusive with manualTranscript.
-        manualTranscript:
-          type: string
-          maxLength: 100000
-          description: >
-            Manual transcript entered by the user. Treated as untrusted input —
-            must not alter system instructions (prompt injection mitigation).
-        promptVersion:
-          type: string
-          description: Pins this job to a specific prompt version for reproducibility.
+      description: >
+        Exactly one of sourceUrl or manualTranscript must be provided.
+        Supplying both or neither is a validation error (400).
+        manualTranscript is treated as untrusted input and must not alter system
+        instructions (prompt injection mitigation).
+      oneOf:
+        - type: object
+          required: [sourceUrl]
+          not:
+            required: [manualTranscript]
+          properties:
+            sourceUrl:
+              type: string
+              format: uri
+              description: Public URL to fetch and process. Mutually exclusive with manualTranscript.
+            promptVersion:
+              type: string
+              description: Pins this job to a specific prompt version for reproducibility.
+        - type: object
+          required: [manualTranscript]
+          not:
+            required: [sourceUrl]
+          properties:
+            manualTranscript:
+              type: string
+              maxLength: 100000
+              description: >
+                Manual transcript entered by the user. Treated as untrusted input —
+                must not alter system instructions (prompt injection mitigation).
+            promptVersion:
+              type: string
+              description: Pins this job to a specific prompt version for reproducibility.
 
     AiJobStepResponse:
       type: object
@@ -1258,6 +1309,12 @@ paths:
       tags: [Identity]
       security:
         - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
       responses:
         '200':
           description: Session revoked
@@ -1351,7 +1408,7 @@ paths:
                   - type: object
                     properties:
                       data:
-                        $ref: '#/components/schemas/UserProfileResponse'
+                        $ref: '#/components/schemas/PublicUserProfileResponse'
         '401':
           $ref: '#/components/responses/401'
         '404':
@@ -1544,7 +1601,13 @@ paths:
   /planets/{id}/join:
     post:
       operationId: joinPlanet
-      summary: Join a planet
+      summary: Join a planet (or rejoin after leaving)
+      description: >
+        Creates a new planet membership for the caller, or reactivates an existing
+        one if the user previously left (D15 rejoin behavior).
+        On rejoin: leftAt is cleared, role is reset to MEMBER, and joinedAt is
+        updated to the current timestamp. No duplicate membership row is created.
+        Returns 409 only when the caller is already an active member.
       tags: [Planet]
       security:
         - bearerAuth: []
@@ -1552,7 +1615,7 @@ paths:
         - $ref: '#/components/parameters/PathId'
       responses:
         '201':
-          description: Membership created
+          description: Membership created or reactivated
           content:
             application/json:
               schema:
@@ -2812,8 +2875,11 @@ paths:
       parameters:
         - $ref: '#/components/parameters/PathId'
       responses:
-        '200':
-          description: Cancellation accepted (final state may still be CANCELLED or COMPLETED)
+        '202':
+          description: >
+            Cancellation request accepted. The operation is asynchronous — the job may
+            reach either CANCELLED or COMPLETED depending on how far processing has
+            advanced. Poll GET /ai/jobs/{id} to observe the final state.
           content:
             application/json:
               schema:

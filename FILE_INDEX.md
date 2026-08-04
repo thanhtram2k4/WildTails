@@ -88,7 +88,19 @@
 - `packages/config/typescript/nextjs.json`
 - `packages/contracts/eslint.config.mjs`
 - `packages/contracts/package.json`
+- `packages/contracts/vitest.config.ts`
 - `packages/contracts/src/index.ts`
+- `packages/contracts/src/contracts.spec.ts`
+- `packages/contracts/src/enums/*.ts` (7 enum files + barrel)
+- `packages/contracts/src/api/*.ts` (error-envelope, success-envelope, pagination + barrel)
+- `packages/contracts/src/auth/*.ts` (principal, tokens + barrel)
+- `packages/contracts/src/ai/*.ts` (ai-job, ai-output + barrel)
+- `packages/contracts/src/game/*.ts` (space-dice + barrel)
+- `packages/contracts/src/gamification/*.ts` (point-transaction, influence-score + barrel)
+- `packages/contracts/src/identity/*.ts` (user, follow + barrel)
+- `packages/contracts/src/knowledge/*.ts` (journal, folder, goal, share-permission + barrel)
+- `packages/contracts/src/planet/*.ts` (planet, membership + barrel)
+- `packages/contracts/src/social/*.ts` (post, comment, reaction, report + barrel)
 - `packages/contracts/tsconfig.json`
 - `packages/database/eslint.config.mjs`
 - `packages/database/package.json`
@@ -148,6 +160,12 @@
 - `docs/adr/ADR-006-deployment-target.md`
 - `docs/adr/ADR-007-transcript-strategy.md`
 
+## Architecture (Phase 02)
+
+- `docs/architecture/module-map.md`
+- `docs/architecture/erd.md`
+- `docs/api/openapi.yaml`
+
 ## Evidence
 
 - `docs/evidence/phase-00/phase-00-report.md`
@@ -155,6 +173,8 @@
 - `docs/evidence/phase-01/final-report.md`
 - `docs/evidence/phase-01/known-issues.md`
 - `docs/evidence/phase-01/test-results.md`
+- `docs/evidence/phase-02/final-report.md`
+- `docs/evidence/phase-02/privacy-review.md`
 
 ## Phase Prompts
 

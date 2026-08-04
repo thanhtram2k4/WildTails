@@ -94,6 +94,10 @@ Defined in `packages/contracts/src/enums/planet-role.ts` as `PlanetRoleSchema` a
 
 A user may hold different roles on different planets. Role is stored in `PlanetMembership.role`. Active membership requires `leftAt IS NULL`.
 
+#### Rejoin after leaving (D15)
+
+When a user who previously left (`leftAt IS NOT NULL`) requests to join the same planet, the service must reactivate the existing `PlanetMembership` row: set `leftAt = NULL`, `role = MEMBER` (unless an admin explicitly assigns another role), and `joinedAt = NOW()`. A new row must not be created — the `@@unique([planetId, userId])` constraint enforces this. Leave and rejoin events must be recorded via `AuditLog` (or a future event-history table).
+
 ### Share permission model
 
 The `SharePermission` Prisma model (`share_permissions` table) governs `SELECTED_USERS` access:
