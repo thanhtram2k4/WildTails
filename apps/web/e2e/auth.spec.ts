@@ -128,6 +128,11 @@ test.describe('Login page', () => {
   });
 
   test('sign in button shows loading state while submitting', async ({ page }) => {
+    let resolveLogin: (() => void) | null = null;
+    const loginCalled = new Promise<void>((r) => {
+      resolveLogin = r;
+    });
+
     await page.route(`${BASE}/api/auth/csrf`, (route) => {
       return route.fulfill({
         status: 200,
@@ -136,7 +141,9 @@ test.describe('Login page', () => {
       });
     });
     await page.route(`${BASE}/api/auth/login`, async (route) => {
-      await page.waitForTimeout(500);
+      resolveLogin?.();
+      // Delay the response so we can check the loading state
+      await new Promise((r) => setTimeout(r, 300));
       return route.fulfill({
         status: 401,
         contentType: 'application/json',
@@ -162,7 +169,9 @@ test.describe('Login page', () => {
     await page.getByLabel(/password/i).fill('password123');
     await page.getByRole('button', { name: /sign in/i }).click();
 
+    await loginCalled;
     await expect(page.getByRole('button', { name: /sign in/i })).toBeDisabled();
+    await page.unrouteAll({ behavior: 'ignoreErrors' });
   });
 });
 

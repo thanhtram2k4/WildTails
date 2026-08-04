@@ -10,6 +10,7 @@ Initial migration creating all 31 tables from the approved Phase 02 schema, incl
 ## Review Notes
 
 ### Tables Created (31)
+
 - users, refresh_tokens, follows, blocks
 - planets, planet_memberships, planet_rules
 - journals, journal_versions, tags, journal_tags, folders, share_permissions, goals
@@ -20,10 +21,12 @@ Initial migration creating all 31 tables from the approved Phase 02 schema, incl
 - notifications, media, audit_logs
 
 ### Enums Created (10)
+
 - UserRole, JournalVisibility, PlanetRole, AiJobState, GamePhase
 - PointSource, PostType, ReactionType, ReportTargetType, ReportStatus
 
 ### Key Constraints Verified
+
 - users.email: UNIQUE + INDEX
 - refresh_tokens.tokenHash: UNIQUE + INDEX
 - refresh_tokens.family: INDEX
@@ -32,16 +35,19 @@ Initial migration creating all 31 tables from the approved Phase 02 schema, incl
 - All foreign keys with appropriate CASCADE/SET NULL/RESTRICT
 
 ### avatarConfig Column
+
 - Type: JSONB (nullable)
 - No table rewrite required (PostgreSQL 12+ adds nullable column without rewrite)
 - Validated at service layer against AvatarConfigSchema
 
 ### Security
+
 - passwordHash stored as TEXT (argon2id hash)
 - No raw tokens stored — tokenHash uses SHA-256
 - All audit and privacy fields present
 
 ### Destructive Operations
+
 - None. This is a fresh schema creation.
 - No DROP, ALTER DROP, or data migration.
 

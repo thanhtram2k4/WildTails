@@ -8,6 +8,7 @@ Tested against: local PostgreSQL (Docker), NestJS API on port 3000
 Request: `{ email: "test3@wildtails.dev", password: "password123", displayName: "Test Cat 3" }`
 
 Response: **201**
+
 - success: true
 - data.accessToken: present (JWT)
 - data.refreshToken: present (base64url)
@@ -24,6 +25,7 @@ Response: **409** — CONFLICT, "Email is already registered"
 Request: `{ email: "test3@wildtails.dev", password: "password123" }`
 
 Response: **200**
+
 - success: true
 - data.accessToken: present
 - data.expiresIn: 900
@@ -33,6 +35,7 @@ Response: **200**
 Request: `{ email: "test3@wildtails.dev", password: "wrongpassword" }`
 
 Response: **401** — UNAUTHORIZED, "Invalid credentials"
+
 - Same error message for wrong password and non-existent email (prevents enumeration)
 
 ## Unauthenticated Access

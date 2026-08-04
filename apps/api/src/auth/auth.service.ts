@@ -124,67 +124,69 @@ export class AuthService {
     let result: TransactionOutcome;
 
     try {
-      result = await this.prisma.db.$transaction(
-        async (tx): Promise<TransactionOutcome> => {
-          const existing = await tx.refreshToken.findUnique({
-            where: { tokenHash },
-            select: {
-              id: true,
-              userId: true,
-              revokedAt: true,
-              expiresAt: true,
-              replacedByTokenId: true,
-              family: true,
-            },
+      result = await this.prisma.db.$transaction(async (tx): Promise<TransactionOutcome> => {
+        const existing = await tx.refreshToken.findUnique({
+          where: { tokenHash },
+          select: {
+            id: true,
+            userId: true,
+            revokedAt: true,
+            expiresAt: true,
+            replacedByTokenId: true,
+            family: true,
+          },
+        });
+
+        if (!existing) return { outcome: 'INVALID' };
+        if (existing.revokedAt !== null) return { outcome: 'INVALID' };
+        if (existing.expiresAt < now) return { outcome: 'INVALID' };
+
+        // Replay detection: if the token was ALREADY rotated before this
+        // request arrived, this is a genuine replay of a consumed token.
+        // Revoke the entire family and return REPLAY (commits before 401).
+        if (existing.replacedByTokenId !== null) {
+          await tx.refreshToken.updateMany({
+            where: { family: existing.family },
+            data: { revokedAt: now },
           });
+          return { outcome: 'REPLAY' };
+        }
 
-          if (!existing) return { outcome: 'INVALID' };
-          if (existing.revokedAt !== null) return { outcome: 'INVALID' };
-          if (existing.expiresAt < now) return { outcome: 'INVALID' };
+        // Normal rotation — conditional update guards against concurrent races.
+        // The WHERE clause (replacedByTokenId IS NULL) ensures only one
+        // concurrent request succeeds. The loser sees count=0.
+        const newRawToken = randomBytes(32).toString('base64url');
+        const newTokenHash = sha256(newRawToken);
+        const newTokenId = randomUUID();
 
-          // Replay detection: token was already rotated — revoke entire family
-          if (existing.replacedByTokenId !== null) {
-            await tx.refreshToken.updateMany({
-              where: { family: existing.family },
-              data: { revokedAt: now },
-            });
-            // Return REPLAY AFTER committing the revocation — do not throw inside tx
-            return { outcome: 'REPLAY' };
-          }
+        const updated = await tx.refreshToken.updateMany({
+          where: {
+            id: existing.id,
+            revokedAt: null,
+            replacedByTokenId: null,
+          },
+          data: { replacedByTokenId: newTokenId },
+        });
 
-          // Normal rotation — use conditional update as a concurrency guard
-          const newRawToken = randomBytes(32).toString('base64url');
-          const newTokenHash = sha256(newRawToken);
-          const newTokenId = randomUUID();
+        if (updated.count === 0) {
+          // Lost the race — another concurrent request rotated first.
+          // Do NOT revoke the family: this is a race, not a confirmed replay.
+          return { outcome: 'LOST_RACE' };
+        }
 
-          const updated = await tx.refreshToken.updateMany({
-            where: {
-              id: existing.id,
-              revokedAt: null,
-              replacedByTokenId: null,
-            },
-            data: { replacedByTokenId: newTokenId },
-          });
+        // Rotation succeeded — create the successor token.
+        await tx.refreshToken.create({
+          data: {
+            id: newTokenId,
+            userId: existing.userId,
+            tokenHash: newTokenHash,
+            family: existing.family,
+            expiresAt: addDays(now, REFRESH_TOKEN_EXPIRES_IN_DAYS),
+          },
+        });
 
-          if (updated.count === 0) {
-            // Lost the race — another concurrent request rotated first
-            return { outcome: 'LOST_RACE' };
-          }
-
-          await tx.refreshToken.create({
-            data: {
-              id: newTokenId,
-              userId: existing.userId,
-              tokenHash: newTokenHash,
-              family: existing.family,
-              expiresAt: addDays(now, REFRESH_TOKEN_EXPIRES_IN_DAYS),
-            },
-          });
-
-          return { outcome: 'SUCCESS', userId: existing.userId, newRawToken };
-        },
-        { isolationLevel: 'Serializable' },
-      );
+        return { outcome: 'SUCCESS', userId: existing.userId, newRawToken };
+      });
     } catch (err: unknown) {
       // Prisma P2034 — serialization failure (concurrent transaction conflict)
       if (err instanceof Error && 'code' in err && (err as { code?: string }).code === 'P2034') {

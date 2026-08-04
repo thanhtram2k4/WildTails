@@ -3,6 +3,7 @@
 Date: 2026-08-04
 
 ## Run 1
+
 ```
 $ npx prisma db seed
 Seeding default planets...
@@ -10,6 +11,7 @@ Seed complete. Default planets: 8
 ```
 
 ## Run 2
+
 ```
 $ npx prisma db seed
 Seeding default planets...
@@ -17,6 +19,7 @@ Seed complete. Default planets: 8
 ```
 
 ## Database Verification (psql)
+
 ```sql
 SELECT name, slug, "isDefault" FROM planets ORDER BY name;
 
@@ -34,6 +37,7 @@ SELECT name, slug, "isDefault" FROM planets ORDER BY name;
 ```
 
 ## Assertions
+
 - Exactly 8 default planets exist after both runs
 - All slugs match the approved list
 - All have isDefault=true
