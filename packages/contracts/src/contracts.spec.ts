@@ -92,7 +92,7 @@ describe('LogoutRequest', () => {
 
   it('accepts valid refreshToken', () => {
     const result = LogoutRequestSchema.safeParse({
-      refreshToken: 'some-refresh-token-value',
+      refreshToken: 'example-placeholder-token',
     });
     expect(result.success).toBe(true);
   });

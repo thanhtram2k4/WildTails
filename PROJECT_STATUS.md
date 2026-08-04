@@ -3,9 +3,9 @@
 ## Current phase
 
 - Phase: 02
-- Status: READY_FOR_REVIEW
+- Status: DONE
 - Active branch: phase/02-architecture-and-contracts
-- Last verified commit: 5e82c35
+- Last verified commit: pending
 - Updated at: 2026-08-04
 
 ## Phase checklist
@@ -14,7 +14,7 @@
 | ----- | ------------------------------ | ---------------- | ------------------- |
 | 00    | Project audit and decisions    | DONE             | Approved 2026-07-31 |
 | 01    | Repository bootstrap           | DONE             | Approved 2026-08-03 |
-| 02    | Architecture and contracts     | READY_FOR_REVIEW | Required            |
+| 02    | Architecture and contracts     | DONE             | Approved 2026-08-04 |
 | 03    | Identity and planets           | NOT_STARTED      | Required            |
 | 04    | Captain's Cabin and goals      | NOT_STARTED      | Required            |
 | 05    | Planet Feed and moderation     | NOT_STARTED      | Required            |
