@@ -20,6 +20,11 @@ Thumbs.db
 # Test
 coverage/
 
+# Playwright generated artifacts
+apps/web/playwright-report/
+apps/web/test-results/
+apps/web/blob-report/
+
 # Prisma
 packages/database/prisma/*.db
 

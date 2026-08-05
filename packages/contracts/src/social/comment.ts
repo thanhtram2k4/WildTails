@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PostAuthorEmbedSchema } from './post.js';
 
 export const CreateCommentRequestSchema = z.object({
   body: z.string().min(1).max(2000),
@@ -9,10 +10,15 @@ export const CreateCommentRequestSchema = z.object({
 
 export type CreateCommentRequest = z.infer<typeof CreateCommentRequestSchema>;
 
+/**
+ * Phase 05 contract amendment (D33): author embed added.
+ * Never includes email, platform role, avatarConfig, or private fields.
+ */
 export const CommentResponseSchema = z.object({
   id: z.string().uuid(),
   body: z.string(),
   authorId: z.string().uuid(),
+  author: PostAuthorEmbedSchema,
   postId: z.string().uuid(),
   parentId: z.string().uuid().optional(),
   createdAt: z.string().datetime(),

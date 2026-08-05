@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { IdentityModule } from './identity/identity.module';
 import { PlanetModule } from './planet/planet.module';
 import { KnowledgeModule } from './knowledge/knowledge.module';
+import { SocialModule } from './social/social.module';
 import { HealthController } from './health/health.controller';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
@@ -18,6 +19,7 @@ import { RolesGuard } from './common/guards/roles.guard';
     IdentityModule,
     PlanetModule,
     KnowledgeModule,
+    SocialModule,
   ],
   controllers: [HealthController],
   providers: [

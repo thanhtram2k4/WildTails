@@ -2,29 +2,29 @@
 
 ## Current phase
 
-- Phase: 04
+- Phase: 05
 - Status: DONE
-- Active branch: phase/04-captains-cabin-and-goals
-- Last verified commit: 377646d
+- Active branch: phase/05-planet-feed-and-moderation
+- Last verified commit: 037e0d6
 - Updated at: 2026-08-05
 
 ## Phase checklist
 
-| Phase | Name                           | Status           | Human approval      |
-| ----- | ------------------------------ | ---------------- | ------------------- |
-| 00    | Project audit and decisions    | DONE             | Approved 2026-07-31 |
-| 01    | Repository bootstrap           | DONE             | Approved 2026-08-03 |
-| 02    | Architecture and contracts     | DONE             | Approved 2026-08-04 |
-| 03    | Identity and planets           | DONE             | Approved 2026-08-04 |
-| 04    | Captain's Cabin and goals      | DONE             | Approved 2026-08-05 |
-| 05    | Planet Feed and moderation     | NOT_STARTED      | Required            |
-| 06    | AI Auto-Log                    | NOT_STARTED      | Required            |
-| 07    | Gamification                   | NOT_STARTED      | Required            |
-| 08    | Real-time Space Dice           | NOT_STARTED      | Required            |
-| 09    | Security hardening             | NOT_STARTED      | Required            |
-| 10    | Testing and evaluation         | NOT_STARTED      | Required            |
-| 11    | DevOps and observability       | NOT_STARTED      | Required            |
-| 12    | Final demo and thesis evidence | NOT_STARTED      | Required            |
+| Phase | Name                           | Status      | Human approval      |
+| ----- | ------------------------------ | ----------- | ------------------- |
+| 00    | Project audit and decisions    | DONE        | Approved 2026-07-31 |
+| 01    | Repository bootstrap           | DONE        | Approved 2026-08-03 |
+| 02    | Architecture and contracts     | DONE        | Approved 2026-08-04 |
+| 03    | Identity and planets           | DONE        | Approved 2026-08-04 |
+| 04    | Captain's Cabin and goals      | DONE        | Approved 2026-08-05 |
+| 05    | Planet Feed and moderation     | DONE        | Approved 2026-08-05 |
+| 06    | AI Auto-Log                    | NOT_STARTED | Required            |
+| 07    | Gamification                   | NOT_STARTED | Required            |
+| 08    | Real-time Space Dice           | NOT_STARTED | Required            |
+| 09    | Security hardening             | NOT_STARTED | Required            |
+| 10    | Testing and evaluation         | NOT_STARTED | Required            |
+| 11    | DevOps and observability       | NOT_STARTED | Required            |
+| 12    | Final demo and thesis evidence | NOT_STARTED | Required            |
 
 Valid statuses:
 
@@ -58,6 +58,71 @@ Phase 02 decisions resolved (D13-D15, approved 2026-08-04):
 None.
 
 ## Latest test evidence
+
+Phase 05 – Planet Feed and Moderation (2026-08-05):
+
+- Install: pnpm install --frozen-lockfile passes (no new dependencies)
+- Lint: 9 packages pass ESLint (0 errors)
+- Format: all files pass Prettier
+- Typecheck: 9 packages pass tsc --noEmit (strict mode, 0 errors)
+- Tests: 365 total across 24 files, all pass
+  - contracts.spec: 54 tests (incl. 31 new Phase 05 social contracts, D33)
+  - worker.spec: 1 test
+  - health.controller.spec: 1 test
+  - zod-validation.pipe.spec: 6 tests
+  - http-exception.filter.spec: 8 tests
+  - auth.service.spec: 11 tests
+  - user.service.spec: 8 tests
+  - planet.service.spec: 13 tests
+  - journal.service.spec: 30 tests
+  - journal-permission.service.spec: 12 tests
+  - folder.service.spec: 16 tests
+  - tag.service.spec: 8 tests
+  - share.service.spec: 14 tests
+  - goal.service.spec: 19 tests
+  - markdown-renderer.test: 22 tests (XSS, safe rendering)
+  - post.service.spec: 19 tests (CRUD, publishing boundary, D24)
+  - comment.service.spec: 14 tests (replies, depth limit, D23)
+  - reaction.service.spec: 10 tests (toggle, switch, concurrency)
+  - saved-post.service.spec: 8 tests (save, unsave, duplicate 409)
+  - report.service.spec: 10 tests (create, self-report D32, duplicate D20)
+  - moderation.service.spec: 12 tests (review, hide, scope, atomic, audit)
+  - PostCard.test: 20 tests (rendering, badges, delete flow)
+  - ReactionBar.test: 8 tests (optimistic update, revert)
+  - ReportDialog.test: 8 tests (form validation, 409 handling)
+- Integration tests: 137 total across 3 files (PostgreSQL-backed)
+  - auth.integration.spec: 12 tests
+  - knowledge.integration.spec: 56 tests
+  - social.integration.spec: 69 tests (publishing boundary, membership,
+    pagination, comments, reactions, saved posts, reports, moderation,
+    concurrency, privacy, content security)
+- E2E tests: 96 tests (7 Playwright specs against real stack)
+  - auth.spec: 11 tests
+  - onboarding-live.spec: 7 tests
+  - screenshots.spec: 4 tests
+  - cabin-goals.spec: 17 tests
+  - cabin-detail-screenshots.spec: 10 tests
+  - phase04-screenshots.spec: 10 tests
+  - social-feed.spec: 44 tests (publishing, D24, D27, D33 author embeds,
+    comments, reactions, saves, reports, moderation, hidden content,
+    journal integrity, 11 screenshots)
+- Prisma: schema valid, client generated (v7.9.1), 5 migrations applied
+- Migration: phase05_moderation_fields (Post/Comment moderation fields,
+  Report.planetId, compound indexes, partial unique index)
+- Build: API (SWC), Web (webpack, 21 routes), Worker (SWC)
+- OpenAPI: valid (0 errors, 5 warnings)
+- Secrets: scanned, no real secrets
+- Zod: only 4.4.3 across all packages
+- Runtime health: Web (3100), API (3000), Worker (3001) all healthy
+- Screenshots: 11 captured from running application
+  - planet-feed, post-composer, publish-from-journal, post-detail, comments,
+    reactions, report-dialog, moderation-queue, moderation-detail,
+    hidden-content-state, empty-feed
+- Decisions: D17-D33 recorded (17 decisions, all human-approved)
+- Contract amendments: PostResponse (D24 journalId removed, D27 author added),
+  CommentResponse (D33 author added), moderator endpoints (D19),
+  gap-fills (SavedPostEntry, ReportResponse)
+- Evidence: docs/evidence/phase-05/
 
 Phase 04 – Captain's Cabin and Goals (2026-08-05):
 
