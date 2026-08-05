@@ -3,9 +3,9 @@
 ## Current phase
 
 - Phase: 04
-- Status: READY_FOR_REVIEW
+- Status: DONE
 - Active branch: phase/04-captains-cabin-and-goals
-- Last verified commit: 5d81c26
+- Last verified commit: 377646d
 - Updated at: 2026-08-05
 
 ## Phase checklist
@@ -16,7 +16,7 @@
 | 01    | Repository bootstrap           | DONE             | Approved 2026-08-03 |
 | 02    | Architecture and contracts     | DONE             | Approved 2026-08-04 |
 | 03    | Identity and planets           | DONE             | Approved 2026-08-04 |
-| 04    | Captain's Cabin and goals      | READY_FOR_REVIEW | Required            |
+| 04    | Captain's Cabin and goals      | DONE             | Approved 2026-08-05 |
 | 05    | Planet Feed and moderation     | NOT_STARTED      | Required            |
 | 06    | AI Auto-Log                    | NOT_STARTED      | Required            |
 | 07    | Gamification                   | NOT_STARTED      | Required            |
