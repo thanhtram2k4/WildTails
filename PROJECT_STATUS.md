@@ -5,7 +5,7 @@
 - Phase: 05
 - Status: READY_FOR_REVIEW
 - Active branch: phase/05-planet-feed-and-moderation
-- Last verified commit: pending
+- Last verified commit: 6d0d708
 - Updated at: 2026-08-05
 
 ## Phase checklist
