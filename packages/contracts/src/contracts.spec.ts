@@ -1,7 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { PublicUserProfileResponseSchema, UserProfileResponseSchema } from './identity/user.js';
 import { CreateAiJobRequestSchema } from './ai/ai-job.js';
-import { CreateJournalRequestSchema } from './knowledge/journal.js';
+import {
+  CreateJournalRequestSchema,
+  JOURNAL_BODY_MAX_LENGTH,
+  JOURNAL_MAX_TAGS,
+} from './knowledge/journal.js';
+import { CreateTagRequestSchema, TagResponseSchema } from './knowledge/tag.js';
 import { LogoutRequestSchema } from './auth/tokens.js';
 import { PlanetMembershipResponseSchema } from './planet/membership.js';
 
@@ -128,5 +133,89 @@ describe('PlanetMembershipResponse', () => {
       // leftAt omitted — should fail since it's required (nullable, not optional)
     });
     expect(result.success).toBe(false);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Phase 04 — Tag contracts
+// ═══════════════════════════════════════════════════════════════════════════
+describe('CreateTagRequest', () => {
+  it('accepts valid tag name', () => {
+    const result = CreateTagRequestSchema.safeParse({ name: 'study notes' });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects empty name', () => {
+    const result = CreateTagRequestSchema.safeParse({ name: '' });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects name exceeding 50 characters', () => {
+    const result = CreateTagRequestSchema.safeParse({ name: 'x'.repeat(51) });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('TagResponse', () => {
+  it('accepts valid tag response', () => {
+    const result = TagResponseSchema.safeParse({
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      name: 'study',
+      ownerId: '550e8400-e29b-41d4-a716-446655440001',
+    });
+    expect(result.success).toBe(true);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Phase 04 — Journal body and tag limits
+// ═══════════════════════════════════════════════════════════════════════════
+describe('Journal limits', () => {
+  it('exports JOURNAL_BODY_MAX_LENGTH as 50000', () => {
+    expect(JOURNAL_BODY_MAX_LENGTH).toBe(50_000);
+  });
+
+  it('exports JOURNAL_MAX_TAGS as 20', () => {
+    expect(JOURNAL_MAX_TAGS).toBe(20);
+  });
+
+  it('rejects body exceeding 50000 characters', () => {
+    const result = CreateJournalRequestSchema.safeParse({
+      title: 'Test',
+      body: 'x'.repeat(50_001),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('accepts body at exactly 50000 characters', () => {
+    const result = CreateJournalRequestSchema.safeParse({
+      title: 'Test',
+      body: 'x'.repeat(50_000),
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects more than 20 tagIds', () => {
+    const tagIds = Array.from(
+      { length: 21 },
+      (_, i) => `550e8400-e29b-41d4-a716-${String(i).padStart(12, '0')}`,
+    );
+    const result = CreateJournalRequestSchema.safeParse({
+      title: 'Test',
+      tagIds,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('accepts exactly 20 tagIds', () => {
+    const tagIds = Array.from(
+      { length: 20 },
+      (_, i) => `550e8400-e29b-41d4-a716-${String(i).padStart(12, '0')}`,
+    );
+    const result = CreateJournalRequestSchema.safeParse({
+      title: 'Test',
+      tagIds,
+    });
+    expect(result.success).toBe(true);
   });
 });

@@ -263,19 +263,19 @@ export default function DashboardPage() {
         </h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <QuickAction
-            href="#"
+            href="/cabin/journals/new"
             label="Write a journal entry"
             description="Capture today's thoughts"
             icon=""
           />
           <QuickAction
-            href="#"
-            label="View planet feed"
-            description="See what's happening"
+            href="/cabin"
+            label="Captain's Cabin"
+            description="Your private space"
             icon=""
           />
           <QuickAction
-            href="#"
+            href="/goals/new"
             label="Set a goal"
             description="Plan your next achievement"
             icon=""

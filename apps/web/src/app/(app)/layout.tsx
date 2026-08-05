@@ -84,6 +84,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             >
               Home
             </Link>
+            <Link
+              href="/cabin"
+              className="text-sm text-slate-200 hover:text-white rounded px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+            >
+              Cabin
+            </Link>
+            <Link
+              href="/goals"
+              className="text-sm text-slate-200 hover:text-white rounded px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+            >
+              Goals
+            </Link>
 
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-2">
