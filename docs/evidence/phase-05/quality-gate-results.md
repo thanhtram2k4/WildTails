@@ -21,17 +21,17 @@
 
 ## Unit Tests
 
-| Package | Files | Tests | Result |
-|---------|-------|-------|--------|
-| contracts | 1 | 52 | Pass |
-| api | 18 | 255 | Pass |
-| web | 4 | 55 | Pass |
-| worker | 1 | 1 | Pass |
-| **Total** | **24** | **363** | **All pass** |
+| Package   | Files  | Tests   | Result       |
+| --------- | ------ | ------- | ------------ |
+| contracts | 1      | 54      | Pass         |
+| api       | 18     | 255     | Pass         |
+| web       | 4      | 55      | Pass         |
+| worker    | 1      | 1       | Pass         |
+| **Total** | **24** | **365** | **All pass** |
 
-### New Phase 05 unit tests: 148
+### New Phase 05 unit tests: 150
 
-- contracts.spec (social section): 29 tests
+- contracts.spec (social section): 31 tests (incl. D33 comment author embed)
 - post.service.spec: 19 tests
 - comment.service.spec: 14 tests
 - reaction.service.spec: 10 tests
@@ -46,12 +46,12 @@
 
 ## Integration Tests (PostgreSQL-backed)
 
-| File | Tests | Result |
-|------|-------|--------|
-| auth.integration.spec | 12 | Pass |
-| knowledge.integration.spec | 56 | Pass |
-| social.integration.spec | 69 | Pass |
-| **Total** | **137** | **All pass** |
+| File                       | Tests   | Result       |
+| -------------------------- | ------- | ------------ |
+| auth.integration.spec      | 12      | Pass         |
+| knowledge.integration.spec | 56      | Pass         |
+| social.integration.spec    | 69      | Pass         |
+| **Total**                  | **137** | **All pass** |
 
 ### New Phase 05 integration tests: 69
 
@@ -61,23 +61,23 @@ reports (8), moderation (10), privacy and security (5).
 
 ## E2E Tests (Playwright against real stack)
 
-| File | Tests | Result |
-|------|-------|--------|
-| auth.spec | 11 | Pass |
-| onboarding-live.spec | 7 | Pass |
-| screenshots.spec | 4 | Pass |
-| cabin-goals.spec | 17 | Pass |
-| cabin-detail-screenshots.spec | 10 | Pass |
-| phase04-screenshots.spec | 10 | Pass |
-| social-feed.spec | 37 | Pass |
-| **Total** | **96** | **All pass** |
+| File                          | Tests   | Result       |
+| ----------------------------- | ------- | ------------ |
+| auth.spec                     | 11      | Pass         |
+| onboarding-live.spec          | 7       | Pass         |
+| screenshots.spec              | 4       | Pass         |
+| cabin-goals.spec              | 17      | Pass         |
+| cabin-detail-screenshots.spec | 10      | Pass         |
+| phase04-screenshots.spec      | 10      | Pass         |
+| social-feed.spec              | 44      | Pass         |
+| **Total**                     | **103** | **All pass** |
 
-### New Phase 05 E2E tests: 37
+### New Phase 05 E2E tests: 44
 
 Publishing boundary (3), post creation and D24/D27 enforcement (5),
-non-member denial (1), comments (3), reactions (4), saved posts (3),
-reports (3), moderation (5), hidden content (3), journal integrity (2),
-screenshots (5).
+non-member denial (1), comments with D33 author embed (5), reactions (4),
+saved posts (3), reports (3), moderation (5), hidden content (3),
+journal integrity (2), screenshots (11 — all required images captured).
 
 ## Database
 
@@ -115,9 +115,16 @@ screenshots (5).
 
 ## Screenshots
 
-5 captured from running application:
-- planet-feed.png
-- post-detail.png
-- moderation-queue.png
-- moderation-detail.png
-- empty-feed.png
+11 captured from running application:
+
+- planet-feed.png (178 KB)
+- post-composer.png (197 KB)
+- publish-from-journal.png (215 KB)
+- post-detail.png (30 KB)
+- comments.png (39 KB) — D33: shows displayName, not UUID
+- reactions.png (30 KB)
+- report-dialog.png (44 KB)
+- moderation-queue.png (33 KB)
+- moderation-detail.png (23 KB)
+- hidden-content-state.png (226 KB)
+- empty-feed.png (35 KB)

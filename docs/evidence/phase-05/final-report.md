@@ -6,26 +6,28 @@
 
 ## Decisions Recorded
 
-D17–D32 recorded in `docs/decisions-register.md`. All human-approved.
+D17–D33 recorded in `docs/decisions-register.md`. All human-approved.
 
 ## Contract Amendments
 
-| Amendment | Type | Decision |
-|-----------|------|----------|
-| `PostResponse.journalId` removed | Privacy narrowing (D24) | journalId never exposed in any API response |
-| `PostResponse.author` added | Feature addition (D27) | Minimal embed: id, displayName, avatarUrl |
-| `ReportResponse.status` added | Gap-fill | Status field was in Prisma/enum but missing from OpenAPI response |
-| `ReportStatus` enum added to OpenAPI | Gap-fill | Was in Zod/Prisma but missing from OpenAPI schemas |
-| `ReviewReportRequest` schema added | New endpoint (D19) | Moderator report review |
-| `GET /planets/{id}/reports` added | New endpoint (D19) | Moderator report queue |
-| `PATCH /reports/{id}` added | New endpoint (D19) | Conditional report review |
-| `SavedPostEntrySchema` Zod schema added | Gap-fill | OpenAPI had it, Zod was missing |
-| `ReportResponseSchema` Zod schema added | Gap-fill | OpenAPI had it, Zod was missing |
-| `PostAuthorEmbedSchema` Zod schema added | Supporting (D27) | Typed author embed |
+| Amendment                                | Type                    | Decision                                                          |
+| ---------------------------------------- | ----------------------- | ----------------------------------------------------------------- |
+| `PostResponse.journalId` removed         | Privacy narrowing (D24) | journalId never exposed in any API response                       |
+| `PostResponse.author` added              | Feature addition (D27)  | Minimal embed: id, displayName, avatarUrl                         |
+| `ReportResponse.status` added            | Gap-fill                | Status field was in Prisma/enum but missing from OpenAPI response |
+| `ReportStatus` enum added to OpenAPI     | Gap-fill                | Was in Zod/Prisma but missing from OpenAPI schemas                |
+| `ReviewReportRequest` schema added       | New endpoint (D19)      | Moderator report review                                           |
+| `GET /planets/{id}/reports` added        | New endpoint (D19)      | Moderator report queue                                            |
+| `PATCH /reports/{id}` added              | New endpoint (D19)      | Conditional report review                                         |
+| `SavedPostEntrySchema` Zod schema added  | Gap-fill                | OpenAPI had it, Zod was missing                                   |
+| `ReportResponseSchema` Zod schema added  | Gap-fill                | OpenAPI had it, Zod was missing                                   |
+| `PostAuthorEmbedSchema` Zod schema added | Supporting (D27)        | Typed author embed                                                |
+| `CommentResponse.author` added           | Feature addition (D33)  | Minimal embed: id, displayName, avatarUrl (same as D27)           |
 
 ## Migration Summary
 
 Single additive migration: `20260805013911_phase05_moderation_fields`
+
 - Post: `moderatedAt`, `moderatedById` (nullable, FK SetNull)
 - Comment: `moderatedAt`, `moderatedById` (nullable, FK SetNull)
 - Report: `planetId` (nullable FK)
@@ -105,34 +107,38 @@ Single additive migration: `20260805013911_phase05_moderation_fields`
 
 ## Test Counts
 
-| Category | Count |
-|----------|-------|
-| Contract tests | 52 |
-| API unit tests | 255 |
-| Web unit tests | 55 |
-| Worker tests | 1 |
-| PostgreSQL integration tests | 137 |
-| Playwright E2E tests | 96 |
-| **Total** | **596** |
+| Category                     | Count   |
+| ---------------------------- | ------- |
+| Contract tests               | 54      |
+| API unit tests               | 255     |
+| Web unit tests               | 55      |
+| Worker tests                 | 1       |
+| PostgreSQL integration tests | 137     |
+| Playwright E2E tests         | 103     |
+| **Total**                    | **605** |
 
 ## Screenshot Paths
 
-- docs/evidence/phase-05/screenshots/planet-feed.png
-- docs/evidence/phase-05/screenshots/post-detail.png
-- docs/evidence/phase-05/screenshots/moderation-queue.png
-- docs/evidence/phase-05/screenshots/moderation-detail.png
-- docs/evidence/phase-05/screenshots/empty-feed.png
+- docs/evidence/phase-05/screenshots/planet-feed.png (178 KB)
+- docs/evidence/phase-05/screenshots/post-composer.png (197 KB)
+- docs/evidence/phase-05/screenshots/publish-from-journal.png (215 KB)
+- docs/evidence/phase-05/screenshots/post-detail.png (30 KB)
+- docs/evidence/phase-05/screenshots/comments.png (39 KB)
+- docs/evidence/phase-05/screenshots/reactions.png (30 KB)
+- docs/evidence/phase-05/screenshots/report-dialog.png (44 KB)
+- docs/evidence/phase-05/screenshots/moderation-queue.png (33 KB)
+- docs/evidence/phase-05/screenshots/moderation-detail.png (23 KB)
+- docs/evidence/phase-05/screenshots/hidden-content-state.png (226 KB)
+- docs/evidence/phase-05/screenshots/empty-feed.png (35 KB)
 
 ## Known Limitations
 
-1. CommentResponse does not include author embed — displays authorId. Will be addressed when comment author embed is added.
-2. PlanetsMenu uses slug-based fallback links if real planet IDs not available.
-3. No post-composer, publish-dialog, or report-dialog screenshots (require more complex interaction scripting).
-4. Block and Mute deferred (D22).
-5. Feed ranking/diversity deferred (D17, D25).
-6. Moderation restoration deferred (D29).
-7. No notification integration for social actions.
-8. Polymorphic Report FK lacks CHECK constraint (known from F-15, deferred).
+1. PlanetsMenu uses slug-based fallback links if real planet IDs not available.
+2. Block and Mute deferred (D22).
+3. Feed ranking/diversity deferred (D17, D25).
+4. Moderation restoration deferred (D29).
+5. No notification integration for social actions.
+6. Polymorphic Report FK lacks CHECK constraint (known from F-15, deferred).
 
 ## Items Requiring Human Visual Approval
 

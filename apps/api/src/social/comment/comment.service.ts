@@ -33,6 +33,7 @@ function toCommentResponse(comment: {
   id: string;
   body: string;
   authorId: string;
+  author: { id: string; displayName: string; avatarUrl: string | null };
   postId: string;
   parentId: string | null;
   createdAt: Date;
@@ -41,6 +42,11 @@ function toCommentResponse(comment: {
     id: comment.id,
     body: comment.body,
     authorId: comment.authorId,
+    author: {
+      id: comment.author.id,
+      displayName: comment.author.displayName,
+      avatarUrl: comment.author.avatarUrl ?? null,
+    },
     postId: comment.postId,
     parentId: comment.parentId ?? undefined,
     createdAt: comment.createdAt.toISOString(),
@@ -109,6 +115,7 @@ export class CommentService {
         id: true,
         body: true,
         authorId: true,
+        author: { select: { id: true, displayName: true, avatarUrl: true } },
         postId: true,
         parentId: true,
         createdAt: true,
@@ -164,6 +171,7 @@ export class CommentService {
         id: true,
         body: true,
         authorId: true,
+        author: { select: { id: true, displayName: true, avatarUrl: true } },
         postId: true,
         parentId: true,
         createdAt: true,

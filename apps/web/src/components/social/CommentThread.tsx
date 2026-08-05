@@ -143,9 +143,18 @@ function CommentRow({
         style={{ backgroundColor: '#f8fafc', border: '1px solid var(--wt-border)' }}
       >
         <div className="flex items-center justify-between gap-2 mb-1">
-          <span className="text-xs font-semibold" style={{ color: 'var(--wt-navy)' }}>
-            {comment.authorId}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span
+              className="inline-flex items-center justify-center h-5 w-5 rounded-full text-[10px] font-bold shrink-0"
+              style={{ backgroundColor: 'var(--wt-teal)', color: '#fff' }}
+              aria-hidden="true"
+            >
+              {(comment.author?.displayName ?? '?').charAt(0).toUpperCase()}
+            </span>
+            <span className="text-xs font-semibold" style={{ color: 'var(--wt-navy)' }}>
+              {comment.author?.displayName ?? 'Unknown'}
+            </span>
+          </div>
           <time
             className="text-xs"
             style={{ color: 'var(--wt-text-muted)' }}
@@ -224,9 +233,18 @@ function CommentRow({
               style={{ backgroundColor: '#f1f5f9', border: '1px solid var(--wt-border)' }}
             >
               <div className="flex items-center justify-between gap-2 mb-1">
-                <span className="text-xs font-semibold" style={{ color: 'var(--wt-navy)' }}>
-                  {r.authorId}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className="inline-flex items-center justify-center h-5 w-5 rounded-full text-[10px] font-bold shrink-0"
+                    style={{ backgroundColor: '#94a3b8', color: '#fff' }}
+                    aria-hidden="true"
+                  >
+                    {(r.author?.displayName ?? '?').charAt(0).toUpperCase()}
+                  </span>
+                  <span className="text-xs font-semibold" style={{ color: 'var(--wt-navy)' }}>
+                    {r.author?.displayName ?? 'Unknown'}
+                  </span>
+                </div>
                 <time
                   className="text-xs"
                   style={{ color: 'var(--wt-text-muted)' }}

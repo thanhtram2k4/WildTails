@@ -10,21 +10,21 @@
 
 ## Phase checklist
 
-| Phase | Name                           | Status      | Human approval      |
-| ----- | ------------------------------ | ----------- | ------------------- |
-| 00    | Project audit and decisions    | DONE        | Approved 2026-07-31 |
-| 01    | Repository bootstrap           | DONE        | Approved 2026-08-03 |
-| 02    | Architecture and contracts     | DONE        | Approved 2026-08-04 |
-| 03    | Identity and planets           | DONE        | Approved 2026-08-04 |
-| 04    | Captain's Cabin and goals      | DONE        | Approved 2026-08-05 |
+| Phase | Name                           | Status           | Human approval      |
+| ----- | ------------------------------ | ---------------- | ------------------- |
+| 00    | Project audit and decisions    | DONE             | Approved 2026-07-31 |
+| 01    | Repository bootstrap           | DONE             | Approved 2026-08-03 |
+| 02    | Architecture and contracts     | DONE             | Approved 2026-08-04 |
+| 03    | Identity and planets           | DONE             | Approved 2026-08-04 |
+| 04    | Captain's Cabin and goals      | DONE             | Approved 2026-08-05 |
 | 05    | Planet Feed and moderation     | READY_FOR_REVIEW | Required            |
-| 06    | AI Auto-Log                    | NOT_STARTED | Required            |
-| 07    | Gamification                   | NOT_STARTED | Required            |
-| 08    | Real-time Space Dice           | NOT_STARTED | Required            |
-| 09    | Security hardening             | NOT_STARTED | Required            |
-| 10    | Testing and evaluation         | NOT_STARTED | Required            |
-| 11    | DevOps and observability       | NOT_STARTED | Required            |
-| 12    | Final demo and thesis evidence | NOT_STARTED | Required            |
+| 06    | AI Auto-Log                    | NOT_STARTED      | Required            |
+| 07    | Gamification                   | NOT_STARTED      | Required            |
+| 08    | Real-time Space Dice           | NOT_STARTED      | Required            |
+| 09    | Security hardening             | NOT_STARTED      | Required            |
+| 10    | Testing and evaluation         | NOT_STARTED      | Required            |
+| 11    | DevOps and observability       | NOT_STARTED      | Required            |
+| 12    | Final demo and thesis evidence | NOT_STARTED      | Required            |
 
 Valid statuses:
 
@@ -65,8 +65,8 @@ Phase 05 – Planet Feed and Moderation (2026-08-05):
 - Lint: 9 packages pass ESLint (0 errors)
 - Format: all files pass Prettier
 - Typecheck: 9 packages pass tsc --noEmit (strict mode, 0 errors)
-- Tests: 363 total across 24 files, all pass
-  - contracts.spec: 52 tests (incl. 29 new Phase 05 social contracts)
+- Tests: 365 total across 24 files, all pass
+  - contracts.spec: 54 tests (incl. 31 new Phase 05 social contracts, D33)
   - worker.spec: 1 test
   - health.controller.spec: 1 test
   - zod-validation.pipe.spec: 6 tests
@@ -103,8 +103,9 @@ Phase 05 – Planet Feed and Moderation (2026-08-05):
   - cabin-goals.spec: 17 tests
   - cabin-detail-screenshots.spec: 10 tests
   - phase04-screenshots.spec: 10 tests
-  - social-feed.spec: 37 tests (publishing, D24, comments, reactions,
-    saves, reports, moderation, hidden content, journal integrity, screenshots)
+  - social-feed.spec: 44 tests (publishing, D24, D27, D33 author embeds,
+    comments, reactions, saves, reports, moderation, hidden content,
+    journal integrity, 11 screenshots)
 - Prisma: schema valid, client generated (v7.9.1), 5 migrations applied
 - Migration: phase05_moderation_fields (Post/Comment moderation fields,
   Report.planetId, compound indexes, partial unique index)
@@ -113,11 +114,14 @@ Phase 05 – Planet Feed and Moderation (2026-08-05):
 - Secrets: scanned, no real secrets
 - Zod: only 4.4.3 across all packages
 - Runtime health: Web (3100), API (3000), Worker (3001) all healthy
-- Screenshots: 5 captured from running application
-  - planet-feed, post-detail, moderation-queue, moderation-detail, empty-feed
-- Decisions: D17-D32 recorded (16 decisions, all human-approved)
+- Screenshots: 11 captured from running application
+  - planet-feed, post-composer, publish-from-journal, post-detail, comments,
+    reactions, report-dialog, moderation-queue, moderation-detail,
+    hidden-content-state, empty-feed
+- Decisions: D17-D33 recorded (17 decisions, all human-approved)
 - Contract amendments: PostResponse (D24 journalId removed, D27 author added),
-  moderator endpoints (D19), gap-fills (SavedPostEntry, ReportResponse)
+  CommentResponse (D33 author added), moderator endpoints (D19),
+  gap-fills (SavedPostEntry, ReportResponse)
 - Evidence: docs/evidence/phase-05/
 
 Phase 04 – Captain's Cabin and Goals (2026-08-05):

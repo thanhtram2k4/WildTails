@@ -819,9 +819,10 @@ components:
           format: uuid
           description: Present for replies. Must belong to the same postId.
 
+    # Phase 05 amendment (D33): author embed added to CommentResponse.
     CommentResponse:
       type: object
-      required: [id, body, authorId, postId, createdAt]
+      required: [id, body, authorId, author, postId, createdAt]
       properties:
         id:
           type: string
@@ -831,6 +832,8 @@ components:
         authorId:
           type: string
           format: uuid
+        author:
+          $ref: '#/components/schemas/PostAuthorEmbed'
         postId:
           type: string
           format: uuid

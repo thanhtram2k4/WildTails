@@ -6,7 +6,8 @@
  *
  * Privacy rules enforced:
  * - journalId is never in any API response (D24)
- * - Author embed never includes email, role, or private fields (D27)
+ * - Author embed never includes email, role, or private fields (D27, D33)
+ * - Comment author embed includes displayName but never email (D33)
  * - Self-report is rejected before DB lookup (D32)
  * - Only planet members can read the feed (default-deny)
  * - Moderator role is planet-scoped; wrong-planet moderator gets 404
@@ -30,7 +31,8 @@
  * 10. PostResponse has no journalId for userB (D24)
  * 11. PostResponse has no journalId for userA (D24, even for owner)
  * 12. Author embed has no email (D27)
- * 13. userB comments on the post → 201
+ * 12b. Comment list includes author displayName, no email (D33)
+ * 13. userB comments on the post → 201; author embed verified (D33)
  * 14. Reply depth > 1 is rejected → 400
  * 15. userB reacts (LIKE) → 200
  * 16. userB switches reaction to INSIGHTFUL → 200 (toggle/switch)
@@ -49,7 +51,14 @@
  * 29. Screenshot: planet feed page
  * 30. Screenshot: post detail page
  * 31. Screenshot: moderation queue page
- * 32. Screenshot: empty feed page
+ * 32. Screenshot: moderation detail page
+ * 33. Screenshot: empty feed page
+ * 34. Screenshot: post composer (visible at top of feed)
+ * 35. Screenshot: publish-from-journal dialog (open state)
+ * 36. Screenshot: comments section with author displayNames (D33)
+ * 37. Screenshot: reaction bar with counts
+ * 38. Screenshot: report dialog (open state)
+ * 39. Screenshot: hidden-content state (feed after moderation)
  */
 
 import { test, expect } from '@playwright/test';
@@ -323,6 +332,19 @@ test.describe.serial('Phase 05 — Planet Feed and Moderation', () => {
     commentId = data.data.id as string;
     expect(data.data.body).toBe('Great field notes!');
     expect(data.data.authorId).toBe(userB.userId);
+
+    // D33: Comment response must include author embed
+    const commentData = data.data as Record<string, unknown>;
+    expect(commentData['author'], 'D33 author embed present').toBeDefined();
+    const author = commentData['author'] as Record<string, unknown>;
+    expect(author['displayName'], 'D33 author.displayName present').toBeDefined();
+    expect(typeof author['displayName'], 'D33 author.displayName is string').toBe('string');
+    expect(
+      (author['displayName'] as string).length,
+      'D33 author.displayName non-empty',
+    ).toBeGreaterThan(0);
+    // Author embed must not expose email
+    expect(author['email'], 'D33 author.email absent').toBeUndefined();
   });
 
   test('11 — reply depth > 1 is rejected (400)', async () => {
@@ -349,6 +371,31 @@ test.describe.serial('Phase 05 — Planet Feed and Moderation', () => {
     const data = await res.json();
     const comments = data.data as Array<{ id: string }>;
     expect(comments.some((c) => c.id === commentId)).toBe(true);
+  });
+
+  test('12b — comment list includes author displayName, no email (D33)', async () => {
+    const res = await apiFetch(`/posts/${postId}/comments?limit=20`, userB.accessToken);
+    expect(res.status, 'D33 comment list status').toBe(200);
+    const data = await res.json();
+    const comments = data.data as Array<Record<string, unknown>>;
+    expect(comments.length, 'D33 at least one comment').toBeGreaterThan(0);
+    for (const comment of comments) {
+      const author = comment['author'] as Record<string, unknown> | undefined;
+      expect(author, `D33 author embed on comment ${String(comment['id'])}`).toBeDefined();
+      expect(
+        typeof (author as Record<string, unknown>)['displayName'],
+        'D33 displayName is string',
+      ).toBe('string');
+      expect(
+        ((author as Record<string, unknown>)['displayName'] as string).length,
+        'D33 displayName non-empty',
+      ).toBeGreaterThan(0);
+      // Must not expose email
+      expect(
+        (author as Record<string, unknown>)['email'],
+        `D33 email absent on comment ${String(comment['id'])}`,
+      ).toBeUndefined();
+    }
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -602,13 +649,14 @@ test.describe.serial('Phase 05 — Planet Feed and Moderation', () => {
     'screenshot — planet feed page (logged in, with posts)',
     { timeout: 120_000 },
     async ({ page }) => {
+      test.setTimeout(120_000);
       // Create a fresh post for the screenshot since the earlier one is hidden
       const freshPost = await apiFetch('/posts', userA.accessToken, {
         method: 'POST',
         body: JSON.stringify({
           body: 'Exploring the frontier with WildTails — check out my latest journal!',
           planetId: planetAId,
-          type: 'TEXT',
+          type: 'ORIGINAL',
         }),
       });
       // Best-effort: if the post was created, the feed will have content
@@ -643,13 +691,14 @@ test.describe.serial('Phase 05 — Planet Feed and Moderation', () => {
   );
 
   test('screenshot — post detail page with comments', { timeout: 120_000 }, async ({ page }) => {
+    test.setTimeout(120_000);
     // Create a standalone post for the screenshot to show a full detail view
     const newPostRes = await apiFetch('/posts', userA.accessToken, {
       method: 'POST',
       body: JSON.stringify({
         body: 'This is a detailed post for the screenshot.',
         planetId: planetAId,
-        type: 'TEXT',
+        type: 'ORIGINAL',
       }),
     });
     let screenshotPostId = postId; // fallback to the hidden one (page shows 404 state)
@@ -686,6 +735,7 @@ test.describe.serial('Phase 05 — Planet Feed and Moderation', () => {
   });
 
   test('screenshot — moderation queue page', { timeout: 120_000 }, async ({ page }) => {
+    test.setTimeout(120_000);
     // Log in as moderator to view moderation queue
     await page.goto(`${WEB_BASE}/login`);
     await page.waitForLoadState('networkidle');
@@ -711,6 +761,7 @@ test.describe.serial('Phase 05 — Planet Feed and Moderation', () => {
   });
 
   test('screenshot — moderation report detail page', { timeout: 120_000 }, async ({ page }) => {
+    test.setTimeout(120_000);
     // Create a fresh report to show the detail page in PENDING state
     const freshReportRes = await apiFetch('/reports', userB.accessToken, {
       method: 'POST',
@@ -753,6 +804,7 @@ test.describe.serial('Phase 05 — Planet Feed and Moderation', () => {
     'screenshot — empty planet feed (new planet, no posts)',
     { timeout: 120_000 },
     async ({ page }) => {
+      test.setTimeout(120_000);
       // Log in and navigate to a planet with no posts
       await page.goto(`${WEB_BASE}/login`);
       await page.waitForLoadState('networkidle');
@@ -773,6 +825,352 @@ test.describe.serial('Phase 05 — Planet Feed and Moderation', () => {
 
       await page.screenshot({
         path: path.join(EVIDENCE_DIR, 'empty-feed.png'),
+        fullPage: true,
+      });
+    },
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ADDITIONAL SCREENSHOTS — post composer, journal dialog, comments (D33),
+  // reactions, report dialog, hidden-content state
+  //
+  // These tests create a fresh TEXT post via API (the original JOURNAL_SHARE
+  // post is hidden by moderation) so the feed has visible content for
+  // composer/comments/reactions screenshots. The hidden-content screenshot
+  // reuses userA's feed where no posts appear.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  test(
+    'screenshot — post composer visible at top of feed (post-composer.png)',
+    { timeout: 120_000 },
+    async ({ page }) => {
+      test.setTimeout(120_000);
+      // Ensure at least one visible post exists so feed loads (not just empty state)
+      await apiFetch('/posts', userA.accessToken, {
+        method: 'POST',
+        body: JSON.stringify({
+          body: 'Screenshot post for composer evidence.',
+          planetId: planetAId,
+          type: 'ORIGINAL',
+        }),
+      });
+
+      await page.goto(`${WEB_BASE}/login`);
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      const emailInput = page.locator('input[type="email"], input[name="email"]').first();
+      const passInput = page.locator('input[type="password"]').first();
+      if (await emailInput.isVisible()) {
+        await emailInput.fill(userAEmail);
+        await passInput.fill(password);
+        await page.locator('button[type="submit"]').first().click();
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(2000);
+      }
+
+      await page.goto(`${WEB_BASE}/planets/${planetAId}/feed`);
+      await page.waitForLoadState('networkidle');
+      // Wait for the PostComposer heading to be visible
+      await page
+        .locator('h2:has-text("Create a post")')
+        .waitFor({ state: 'visible', timeout: 15_000 })
+        .catch(() => {
+          // If heading isn't found the screenshot still captures current state
+        });
+      await page.waitForTimeout(1500);
+
+      await page.screenshot({
+        path: path.join(EVIDENCE_DIR, 'post-composer.png'),
+        fullPage: true,
+      });
+    },
+  );
+
+  test(
+    'screenshot — publish-from-journal dialog open (publish-from-journal.png)',
+    { timeout: 120_000 },
+    async ({ page }) => {
+      test.setTimeout(120_000);
+      await page.goto(`${WEB_BASE}/login`);
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      const emailInput = page.locator('input[type="email"], input[name="email"]').first();
+      const passInput = page.locator('input[type="password"]').first();
+      if (await emailInput.isVisible()) {
+        await emailInput.fill(userAEmail);
+        await passInput.fill(password);
+        await page.locator('button[type="submit"]').first().click();
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(2000);
+      }
+
+      await page.goto(`${WEB_BASE}/planets/${planetAId}/feed`);
+      await page.waitForLoadState('networkidle');
+      // Wait for PostComposer to be interactive
+      const postTypeSelect = page.locator('select#post-type');
+      await postTypeSelect.waitFor({ state: 'visible', timeout: 15_000 }).catch(() => {});
+      await page.waitForTimeout(500);
+
+      // Select "Share from journal" — this should open the dialog automatically
+      await postTypeSelect.selectOption('JOURNAL_SHARE').catch(() => {});
+      await page.waitForTimeout(1500);
+
+      // The dialog may open automatically; if not, click "Open journal picker"
+      const dialogHeading = page.locator('[role="dialog"] h2');
+      const dialogVisible = await dialogHeading.isVisible().catch(() => false);
+      if (!dialogVisible) {
+        const pickerBtn = page.locator('button:has-text("Open journal picker")');
+        await pickerBtn.click().catch(() => {});
+        await page.waitForTimeout(1000);
+      }
+
+      await page.screenshot({
+        path: path.join(EVIDENCE_DIR, 'publish-from-journal.png'),
+        fullPage: true,
+      });
+    },
+  );
+
+  test(
+    'screenshot — comments with author displayNames visible (D33) (comments.png)',
+    { timeout: 120_000 },
+    async ({ page }) => {
+      test.setTimeout(120_000);
+      // Create a fresh post and add comments with known author names via API
+      const freshPostRes = await apiFetch('/posts', userA.accessToken, {
+        method: 'POST',
+        body: JSON.stringify({
+          body: 'Post for comments screenshot — author names should be visible.',
+          planetId: planetAId,
+          type: 'ORIGINAL',
+        }),
+      });
+      let screenshotPostId = '';
+      if (freshPostRes.status === 201) {
+        screenshotPostId = ((await freshPostRes.json()).data as Record<string, unknown>)[
+          'id'
+        ] as string;
+        // Add two comments from userB so the thread is populated
+        await apiFetch(`/posts/${screenshotPostId}/comments`, userB.accessToken, {
+          method: 'POST',
+          body: JSON.stringify({
+            body: 'A comment from Tail B — displayName should show here.',
+            postId: screenshotPostId,
+          }),
+        });
+        await apiFetch(`/posts/${screenshotPostId}/comments`, userA.accessToken, {
+          method: 'POST',
+          body: JSON.stringify({
+            body: 'A reply from Tail A — showing author embed D33.',
+            postId: screenshotPostId,
+          }),
+        });
+      }
+
+      await page.goto(`${WEB_BASE}/login`);
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      const emailInput = page.locator('input[type="email"], input[name="email"]').first();
+      const passInput = page.locator('input[type="password"]').first();
+      if (await emailInput.isVisible()) {
+        await emailInput.fill(userBEmail);
+        await passInput.fill(password);
+        await page.locator('button[type="submit"]').first().click();
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(2000);
+      }
+
+      if (screenshotPostId) {
+        await page.goto(`${WEB_BASE}/planets/${planetAId}/posts/${screenshotPostId}`);
+      } else {
+        // Fallback — navigate to the feed post detail using the first available post
+        await page.goto(`${WEB_BASE}/planets/${planetAId}/feed`);
+      }
+      await page.waitForLoadState('networkidle');
+      // Wait for the comments section to appear
+      await page
+        .locator('[aria-label="Comments"]')
+        .waitFor({ state: 'visible', timeout: 15_000 })
+        .catch(() => {});
+      await page.waitForTimeout(2000);
+
+      await page.screenshot({
+        path: path.join(EVIDENCE_DIR, 'comments.png'),
+        fullPage: true,
+      });
+    },
+  );
+
+  test(
+    'screenshot — reaction bar with counts visible (reactions.png)',
+    { timeout: 120_000 },
+    async ({ page }) => {
+      test.setTimeout(120_000);
+      // Create a fresh post and react to it via API so counts appear
+      const freshPostRes = await apiFetch('/posts', userA.accessToken, {
+        method: 'POST',
+        body: JSON.stringify({
+          body: 'Post for reactions screenshot — reaction counts should appear.',
+          planetId: planetAId,
+          type: 'ORIGINAL',
+        }),
+      });
+      let screenshotPostId = '';
+      if (freshPostRes.status === 201) {
+        screenshotPostId = ((await freshPostRes.json()).data as Record<string, unknown>)[
+          'id'
+        ] as string;
+        // React as userB so the LIKE count shows
+        await apiFetch(`/posts/${screenshotPostId}/reactions`, userB.accessToken, {
+          method: 'POST',
+          body: JSON.stringify({ postId: screenshotPostId, type: 'LIKE' }),
+        });
+        // Also react as moderator for INSIGHTFUL count
+        await apiFetch(`/posts/${screenshotPostId}/reactions`, moderatorUser.accessToken, {
+          method: 'POST',
+          body: JSON.stringify({ postId: screenshotPostId, type: 'INSIGHTFUL' }),
+        });
+      }
+
+      await page.goto(`${WEB_BASE}/login`);
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      const emailInput = page.locator('input[type="email"], input[name="email"]').first();
+      const passInput = page.locator('input[type="password"]').first();
+      if (await emailInput.isVisible()) {
+        await emailInput.fill(userBEmail);
+        await passInput.fill(password);
+        await page.locator('button[type="submit"]').first().click();
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(2000);
+      }
+
+      if (screenshotPostId) {
+        await page.goto(`${WEB_BASE}/planets/${planetAId}/posts/${screenshotPostId}`);
+      } else {
+        await page.goto(`${WEB_BASE}/planets/${planetAId}/feed`);
+      }
+      await page.waitForLoadState('networkidle');
+      // Wait for the reaction bar group to be visible
+      await page
+        .locator('[role="group"][aria-label="Post reactions"]')
+        .first()
+        .waitFor({ state: 'visible', timeout: 15_000 })
+        .catch(() => {});
+      await page.waitForTimeout(1500);
+
+      await page.screenshot({
+        path: path.join(EVIDENCE_DIR, 'reactions.png'),
+        fullPage: true,
+      });
+    },
+  );
+
+  test(
+    'screenshot — report dialog open (report-dialog.png)',
+    { timeout: 120_000 },
+    async ({ page }) => {
+      test.setTimeout(120_000);
+      // Create a fresh post for userB to report (userB cannot report userB's own content)
+      const freshPostRes = await apiFetch('/posts', userA.accessToken, {
+        method: 'POST',
+        body: JSON.stringify({
+          body: 'Post for report dialog screenshot.',
+          planetId: planetAId,
+          type: 'ORIGINAL',
+        }),
+      });
+      let screenshotPostId = '';
+      if (freshPostRes.status === 201) {
+        screenshotPostId = ((await freshPostRes.json()).data as Record<string, unknown>)[
+          'id'
+        ] as string;
+      }
+
+      await page.goto(`${WEB_BASE}/login`);
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      const emailInput = page.locator('input[type="email"], input[name="email"]').first();
+      const passInput = page.locator('input[type="password"]').first();
+      if (await emailInput.isVisible()) {
+        await emailInput.fill(userBEmail);
+        await passInput.fill(password);
+        await page.locator('button[type="submit"]').first().click();
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(2000);
+      }
+
+      if (screenshotPostId) {
+        await page.goto(`${WEB_BASE}/planets/${planetAId}/posts/${screenshotPostId}`);
+      } else {
+        await page.goto(`${WEB_BASE}/planets/${planetAId}/feed`);
+      }
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(2000);
+
+      // Click the "Report this post" button (aria-label on the flag icon button in PostCard)
+      const reportBtn = page.locator('[aria-label="Report this post"]').first();
+      const reportBtnVisible = await reportBtn.isVisible().catch(() => false);
+      if (reportBtnVisible) {
+        await reportBtn.click();
+        // Wait for the report dialog to appear
+        await page
+          .locator('[role="dialog"][aria-labelledby="report-dialog-title"]')
+          .waitFor({
+            state: 'visible',
+            timeout: 10_000,
+          })
+          .catch(() => {});
+        await page.waitForTimeout(800);
+      }
+
+      await page.screenshot({
+        path: path.join(EVIDENCE_DIR, 'report-dialog.png'),
+        fullPage: true,
+      });
+    },
+  );
+
+  test(
+    'screenshot — hidden-content state: feed shows no moderated post (hidden-content-state.png)',
+    { timeout: 120_000 },
+    async ({ page }) => {
+      test.setTimeout(120_000);
+      // At this point the original post is ACTIONED/hidden.
+      // userA navigates to their planet feed — the hidden post must not appear.
+      await page.goto(`${WEB_BASE}/login`);
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(1000);
+
+      const emailInput = page.locator('input[type="email"], input[name="email"]').first();
+      const passInput = page.locator('input[type="password"]').first();
+      if (await emailInput.isVisible()) {
+        await emailInput.fill(userAEmail);
+        await passInput.fill(password);
+        await page.locator('button[type="submit"]').first().click();
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(2000);
+      }
+
+      await page.goto(`${WEB_BASE}/planets/${planetAId}/feed`);
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(3000);
+
+      // Assert the original hidden post is not in the API feed response
+      // (verified in tests 28-29 above via API assertions).
+      // We check the post count from API to confirm hidden state, then screenshot.
+      const feedRes = await apiFetch(`/planets/${planetAId}/posts`, userA.accessToken);
+      const feedData = (await feedRes.json()) as { data: Array<{ id: string }> };
+      const hiddenPostVisible = feedData.data.some((p) => p.id === postId);
+      expect(hiddenPostVisible, 'original moderated post absent from API feed').toBe(false);
+
+      await page.screenshot({
+        path: path.join(EVIDENCE_DIR, 'hidden-content-state.png'),
         fullPage: true,
       });
     },

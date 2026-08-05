@@ -378,7 +378,19 @@ describe('CommentRequest/Response', () => {
     expect(result.success).toBe(true);
   });
 
-  it('parses valid CommentResponse', () => {
+  it('parses valid CommentResponse with author embed (D33)', () => {
+    const result = CommentResponseSchema.safeParse({
+      id: VALID_UUID,
+      body: 'A comment',
+      authorId: VALID_UUID,
+      author: validAuthor,
+      postId: VALID_UUID_2,
+      createdAt: VALID_DATE,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects CommentResponse without author embed', () => {
     const result = CommentResponseSchema.safeParse({
       id: VALID_UUID,
       body: 'A comment',
@@ -386,7 +398,12 @@ describe('CommentRequest/Response', () => {
       postId: VALID_UUID_2,
       createdAt: VALID_DATE,
     });
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
+  });
+
+  it('CommentResponse author does not expose email', () => {
+    const shape = CommentResponseSchema.shape.author.shape;
+    expect('email' in shape).toBe(false);
   });
 });
 

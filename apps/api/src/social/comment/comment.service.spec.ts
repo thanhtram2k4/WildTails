@@ -40,10 +40,13 @@ const activePost = { id: POST_ID, planetId: PLANET_ID };
 const activeMembership = { leftAt: null };
 const formerMembership = { leftAt: new Date('2025-05-01') };
 
+const baseAuthor = { id: USER_ID, displayName: 'Test User', avatarUrl: null };
+
 const baseComment = {
   id: COMMENT_ID,
   body: 'Great post!',
   authorId: USER_ID,
+  author: baseAuthor,
   postId: POST_ID,
   parentId: null,
   createdAt: NOW,

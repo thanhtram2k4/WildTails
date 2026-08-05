@@ -38,6 +38,7 @@ Updated: 2026-07-31
 | D30 | Platform ADMIN scope          | ADMIN may access/review/hide in any planet. ADMIN without membership cannot create normal planet content                                                                                                       | -       | 2026-08-05 |
 | D31 | Feed access                   | All operations require authentication. No unauthenticated public feed                                                                                                                                          | -       | 2026-08-05 |
 | D32 | Self-reporting                | Rejected. Reporter cannot report own content. Privacy-safe validation error                                                                                                                                    | -       | 2026-08-05 |
+| D33 | Comment author embed          | Add author: {id, displayName, avatarUrl} to CommentResponse. Same rules as D27. No email, role, avatarConfig, or private fields. Phase 05 contract amendment                                                   | -       | 2026-08-05 |
 
 ## Approved decisions (from documentation)
 
