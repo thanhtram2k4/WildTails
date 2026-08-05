@@ -1,12 +1,114 @@
 'use client';
 
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/auth-context';
 import { AvatarPreview } from '@/components/avatar/avatar-preview';
 import { Button } from '@/components/ui/button';
 import type { AvatarConfig } from '@wildtails/contracts';
+
+/** The eight default planet slugs with display names. */
+const DEFAULT_PLANETS = [
+  { slug: 'learning', name: 'Learning', id: '' },
+  { slug: 'sports', name: 'Sports', id: '' },
+  { slug: 'finance', name: 'Finance', id: '' },
+  { slug: 'work', name: 'Work', id: '' },
+  { slug: 'travel', name: 'Travel', id: '' },
+  { slug: 'health', name: 'Health', id: '' },
+  { slug: 'pets', name: 'Pets', id: '' },
+  { slug: 'art', name: 'Art', id: '' },
+] as const;
+
+interface PlanetStub {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+/** Planets dropdown — fetches planet list once on open. */
+function PlanetsMenu() {
+  const [open, setOpen] = useState(false);
+  const [planets, setPlanets] = useState<PlanetStub[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open || loaded) return;
+    const fallback = DEFAULT_PLANETS.map((p, i) => ({ id: String(i), name: p.name, slug: p.slug }));
+    async function loadPlanets() {
+      try {
+        const { apiGet } = await import('@/lib/api-helpers');
+        const env = await apiGet<PlanetStub[]>('/planets');
+        if (Array.isArray(env.data) && env.data.length > 0) {
+          setPlanets(env.data);
+        } else {
+          setPlanets(fallback);
+        }
+      } catch {
+        setPlanets(fallback);
+      } finally {
+        setLoaded(true);
+      }
+    }
+    void loadPlanets();
+  }, [open, loaded]);
+
+  useEffect(() => {
+    function handleOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [open]);
+
+  return (
+    <div ref={menuRef} className="relative">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="text-sm text-slate-200 hover:text-white rounded px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+      >
+        Planets
+        <span className="ml-1 text-xs" aria-hidden="true">
+          {open ? '\u25B2' : '\u25BC'}
+        </span>
+      </button>
+
+      {open ? (
+        <div
+          role="menu"
+          aria-label="Planets"
+          className="absolute left-0 top-full mt-1 w-44 rounded-xl shadow-lg border py-1 z-50"
+          style={{ backgroundColor: 'var(--wt-card)', borderColor: 'var(--wt-border)' }}
+        >
+          {planets.length === 0 ? (
+            <p className="px-4 py-2 text-xs" style={{ color: 'var(--wt-text-muted)' }}>
+              Loading...
+            </p>
+          ) : (
+            planets.map((p) => (
+              <Link
+                key={p.id || p.slug}
+                href={`/planets/${p.id || p.slug}/feed`}
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="block px-4 py-2 text-sm hover:bg-teal-50 focus-visible:outline-none focus-visible:bg-teal-50"
+                style={{ color: 'var(--wt-navy)' }}
+              >
+                {p.name}
+              </Link>
+            ))
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 const DEFAULT_AVATAR: AvatarConfig = {
   base: 'cat-round',
@@ -96,6 +198,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             >
               Goals
             </Link>
+            <PlanetsMenu />
 
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-2">

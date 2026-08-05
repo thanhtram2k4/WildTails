@@ -8,7 +8,7 @@ interface EmptyStateProps {
   description?: string;
   action?: ReactNode;
   /** Which icon variant to display. */
-  variant?: 'journal' | 'goal' | 'folder' | 'generic';
+  variant?: 'journal' | 'goal' | 'folder' | 'generic' | 'post' | 'moderation';
 }
 
 function JournalIcon() {
@@ -182,11 +182,102 @@ function GenericIcon() {
   );
 }
 
+function PostIcon() {
+  return (
+    <svg
+      width="64"
+      height="64"
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <rect
+        x="8"
+        y="10"
+        width="48"
+        height="44"
+        rx="6"
+        stroke="#0d9488"
+        strokeWidth="2"
+        fill="#f0fdfa"
+      />
+      <circle cx="22" cy="24" r="7" stroke="#1e3a5f" strokeWidth="1.5" fill="none" />
+      <line
+        x1="32"
+        y1="22"
+        x2="50"
+        y2="22"
+        stroke="#1e3a5f"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="32"
+        y1="28"
+        x2="44"
+        y2="28"
+        stroke="#1e3a5f"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="14"
+        y1="40"
+        x2="50"
+        y2="40"
+        stroke="#1e3a5f"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="14"
+        y1="48"
+        x2="38"
+        y2="48"
+        stroke="#1e3a5f"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function ModerationIcon() {
+  return (
+    <svg
+      width="64"
+      height="64"
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M32 8 L52 18 L52 34 Q52 50 32 58 Q12 50 12 34 L12 18 Z"
+        stroke="#0d9488"
+        strokeWidth="2"
+        fill="#f0fdfa"
+      />
+      <polyline
+        points="24 32 30 38 42 26"
+        stroke="#0d9488"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </svg>
+  );
+}
+
 const ICONS: Record<NonNullable<EmptyStateProps['variant']>, () => React.ReactElement> = {
   journal: JournalIcon,
   goal: GoalIcon,
   folder: FolderIcon,
   generic: GenericIcon,
+  post: PostIcon,
+  moderation: ModerationIcon,
 };
 
 export function EmptyState({ title, description, action, variant = 'generic' }: EmptyStateProps) {

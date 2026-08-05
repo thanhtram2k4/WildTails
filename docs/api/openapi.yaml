@@ -150,6 +150,10 @@ components:
       type: string
       enum: [POST, COMMENT, USER]
 
+    ReportStatus:
+      type: string
+      enum: [PENDING, REVIEWED, DISMISSED, ACTIONED]
+
     PointSource:
       type: string
       enum:
@@ -730,10 +734,23 @@ components:
           format: uuid
           description: Required when type is GOAL_UPDATE.
 
+    # Phase 05 amendment (D27): author embed added.
+    # Phase 05 amendment (D24): journalId removed — never exposed in any API response.
     PostResponse:
       type: object
       required:
-        [id, body, authorId, planetId, type, reactionCounts, commentCount, createdAt, updatedAt]
+        [
+          id,
+          body,
+          authorId,
+          author,
+          planetId,
+          type,
+          reactionCounts,
+          commentCount,
+          createdAt,
+          updatedAt,
+        ]
       properties:
         id:
           type: string
@@ -743,14 +760,13 @@ components:
         authorId:
           type: string
           format: uuid
+        author:
+          $ref: '#/components/schemas/PostAuthorEmbed'
         planetId:
           type: string
           format: uuid
         type:
           $ref: '#/components/schemas/PostType'
-        journalId:
-          type: string
-          format: uuid
         goalId:
           type: string
           format: uuid
@@ -769,6 +785,22 @@ components:
         updatedAt:
           type: string
           format: date-time
+
+    PostAuthorEmbed:
+      type: object
+      description: >
+        Minimal public author embed (D27). Never includes email, platform role,
+        avatarConfig, journals, goals, or private fields.
+      required: [id, displayName]
+      properties:
+        id:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+        avatarUrl:
+          type: ['string', 'null']
+          format: uri
 
     # ------ Social — Comment ------------------------------------------------
     CreateCommentRequest:
@@ -857,7 +889,7 @@ components:
 
     ReportResponse:
       type: object
-      required: [id, targetType, targetId, reason, createdAt]
+      required: [id, targetType, targetId, reason, status, createdAt]
       properties:
         id:
           type: string
@@ -869,9 +901,23 @@ components:
           format: uuid
         reason:
           type: string
+        status:
+          $ref: '#/components/schemas/ReportStatus'
         createdAt:
           type: string
           format: date-time
+
+    # Phase 05 amendment (D19): moderator report review request.
+    ReviewReportRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [REVIEWED, DISMISSED, ACTIONED]
+        note:
+          type: string
+          maxLength: 500
 
     # ------ Social — Saved Post ---------------------------------------------
     SavedPostEntry:
@@ -2804,6 +2850,89 @@ paths:
           $ref: '#/components/responses/400'
         '401':
           $ref: '#/components/responses/401'
+
+  # Phase 05 amendment (D19): moderator report queue.
+  /planets/{id}/reports:
+    get:
+      operationId: listPlanetReports
+      summary: List reports for a planet's content (moderator/admin/owner only)
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - $ref: '#/components/parameters/QueryCursor'
+        - $ref: '#/components/parameters/QueryLimit'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ReportStatus'
+          description: Filter by report status.
+      responses:
+        '200':
+          description: Paginated report list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ReportResponse'
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+
+  # Phase 05 amendment (D19): moderator report review.
+  /reports/{id}:
+    patch:
+      operationId: reviewReport
+      summary: Review a pending report (moderator/admin/owner of target planet or platform ADMIN)
+      tags: [Social]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewReportRequest'
+      responses:
+        '200':
+          description: Report reviewed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ReportResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          description: Report has already been processed by another moderator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
 
   # =========================================================================
   # AI Jobs

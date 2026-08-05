@@ -156,12 +156,14 @@ model User {
   goals            Goal[]
 
   // Relations – Social
-  posts          Post[]
-  comments       Comment[]
-  reactions      Reaction[]
-  savedPosts     SavedPost[]
-  reports        Report[]    @relation("Reporter")
-  reviewedReports Report[]   @relation("Reviewer")
+  posts             Post[]
+  comments          Comment[]
+  reactions         Reaction[]
+  savedPosts        SavedPost[]
+  reports           Report[]    @relation("Reporter")
+  reviewedReports   Report[]    @relation("Reviewer")
+  moderatedPosts    Post[]      @relation("PostModerator")
+  moderatedComments Comment[]   @relation("CommentModerator")
 
   // Relations – AI
   aiJobs AiJob[]
@@ -272,6 +274,7 @@ model Planet {
   folders     Folder[]
   posts       Post[]
   goals       Goal[]
+  reports     Report[]
 
   @@index([slug])
   @@map("planets")
@@ -482,13 +485,16 @@ model Post {
   updatedAt DateTime @updatedAt
   /// Soft delete (D10).
   deletedAt DateTime?
+  /// Moderator hiding (D18). Separate from owner deletion (deletedAt).
+  moderatedAt   DateTime?
+  moderatedById String?
+  moderatedBy   User?    @relation("PostModerator", fields: [moderatedById], references: [id], onDelete: SetNull)
 
   comments  Comment[]
   reactions Reaction[]
   savedBy   SavedPost[]
-  reports   Report[]
 
-  @@index([planetId, createdAt(sort: Desc)])
+  @@index([planetId, deletedAt, moderatedAt, createdAt(sort: Desc), id(sort: Desc)])
   @@index([authorId, createdAt(sort: Desc)])
   @@index([deletedAt])
   @@map("posts")
@@ -510,10 +516,12 @@ model Comment {
   updatedAt DateTime @updatedAt
   /// Soft delete (D10).
   deletedAt DateTime?
+  /// Moderator hiding (D18). Separate from owner deletion (deletedAt).
+  moderatedAt   DateTime?
+  moderatedById String?
+  moderatedBy   User?    @relation("CommentModerator", fields: [moderatedById], references: [id], onDelete: SetNull)
 
-  reports Report[]
-
-  @@index([postId])
+  @@index([postId, deletedAt, moderatedAt, createdAt(sort: Desc)])
   @@index([parentId])
   @@index([deletedAt])
   @@map("comments")
@@ -560,20 +568,25 @@ model Report {
   targetId     String
   reason       String
   description  String?
+  /// Derived server-side from target content. Null for USER reports (D30).
+  planetId     String?
+  planet       Planet?  @relation(fields: [planetId], references: [id])
   status       ReportStatus     @default(PENDING)
   reviewedById String?
   reviewedBy   User?            @relation("Reviewer", fields: [reviewedById], references: [id])
   reviewedAt   DateTime?
   createdAt    DateTime         @default(now())
 
-  /// Convenience relation for post reports (only populated when targetType = POST).
-  post    Post?    @relation(fields: [targetId], references: [id], map: "report_post_fk")
-  /// Convenience relation for comment reports (only populated when targetType = COMMENT).
-  comment Comment? @relation(fields: [targetId], references: [id], map: "report_comment_fk")
+  // NOTE: targetId is a polymorphic FK — no DB-level FK constraint is applied here.
+  // PostgreSQL cannot enforce two FK constraints on the same column simultaneously.
+  // Referential integrity is enforced by ReportService before each insert.
+  // The migration 20260805100000_fix_report_polymorphic_fk dropped report_post_fk
+  // and report_comment_fk from the DB.
 
   @@index([targetType, targetId])
   @@index([status])
   @@index([reporterId])
+  @@index([planetId, status, createdAt(sort: Desc), id(sort: Desc)])
   @@map("reports")
 }
 
