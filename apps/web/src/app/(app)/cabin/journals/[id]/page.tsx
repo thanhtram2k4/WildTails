@@ -43,7 +43,7 @@ export default function JournalDetailPage({ params }: JournalDetailPageProps) {
     let cancelled = false;
     setRef.current({ status: 'loading' });
 
-    apiGet<JournalResponse>(`/knowledge/journals/${id}`).then(
+    apiGet<JournalResponse>(`/journals/${id}`).then(
       (env) => {
         if (cancelled) return;
         setRef.current({ status: 'success', journal: env.data });
@@ -73,7 +73,7 @@ export default function JournalDetailPage({ params }: JournalDetailPageProps) {
     if (versions !== null) return;
     setVersionsLoading(true);
     try {
-      const env = await apiGet<JournalVersion[]>(`/knowledge/journals/${id}/versions`);
+      const env = await apiGet<JournalVersion[]>(`/journals/${id}/versions`);
       setVersions(Array.isArray(env.data) ? env.data : []);
     } catch {
       setVersions([]);
@@ -87,7 +87,7 @@ export default function JournalDetailPage({ params }: JournalDetailPageProps) {
     setDeleting(true);
     setDeleteError(null);
     try {
-      await apiDelete(`/knowledge/journals/${id}`);
+      await apiDelete(`/journals/${id}`);
       router.replace('/cabin/journals');
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : 'Failed to delete journal.');

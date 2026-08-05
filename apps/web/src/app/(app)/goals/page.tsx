@@ -25,7 +25,7 @@ export default function GoalsPage() {
     let cancelled = false;
     setListRef.current({ status: 'loading' });
 
-    apiGet<GoalResponse[]>('/knowledge/goals?limit=20').then(
+    apiGet<GoalResponse[]>('/goals?limit=20').then(
       (env) => {
         if (cancelled) return;
         setListRef.current({
@@ -56,7 +56,7 @@ export default function GoalsPage() {
     const prevCursor = listState.cursor;
     setLoadingMore(true);
     try {
-      const env = await apiGet<GoalResponse[]>(`/knowledge/goals?limit=20&cursor=${prevCursor}`);
+      const env = await apiGet<GoalResponse[]>(`/goals?limit=20&cursor=${prevCursor}`);
       setListState((prev) => {
         if (prev.status !== 'success') return prev;
         return {

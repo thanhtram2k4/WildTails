@@ -28,7 +28,7 @@ export function FolderNav({ selectedFolderId, onFolderSelect }: FolderNavProps) 
   const load = useCallback(async () => {
     setRef.current({ status: 'loading' });
     try {
-      const env = await apiGet<FolderResponse[]>('/knowledge/folders');
+      const env = await apiGet<FolderResponse[]>('/folders');
       setRef.current({ status: 'success', folders: env.data });
     } catch (err) {
       setRef.current({
@@ -49,7 +49,7 @@ export function FolderNav({ selectedFolderId, onFolderSelect }: FolderNavProps) 
     setCreating(true);
     setCreateError(null);
     try {
-      await apiPost('/knowledge/folders', { name });
+      await apiPost('/folders', { name });
       setNewName('');
       setRetry((n) => n + 1);
     } catch (err) {
@@ -63,7 +63,7 @@ export function FolderNav({ selectedFolderId, onFolderSelect }: FolderNavProps) 
     if (!confirm('Delete this folder? Journals in it will be unfoldered.')) return;
     setDeletingId(id);
     try {
-      await apiDelete(`/knowledge/folders/${id}`);
+      await apiDelete(`/folders/${id}`);
       if (selectedFolderId === id) onFolderSelect?.(undefined);
       setRetry((n) => n + 1);
     } catch (err) {

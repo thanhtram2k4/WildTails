@@ -37,7 +37,7 @@ export default function GoalDetailPage({ params }: GoalDetailPageProps) {
     let cancelled = false;
     setRef.current({ status: 'loading' });
 
-    apiGet<GoalResponse>(`/knowledge/goals/${id}`).then(
+    apiGet<GoalResponse>(`/goals/${id}`).then(
       (env) => {
         if (cancelled) return;
         setRef.current({ status: 'success', goal: env.data });
@@ -63,7 +63,7 @@ export default function GoalDetailPage({ params }: GoalDetailPageProps) {
     setDeleting(true);
     setDeleteError(null);
     try {
-      await apiDelete(`/knowledge/goals/${id}`);
+      await apiDelete(`/goals/${id}`);
       router.replace('/goals');
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : 'Failed to delete goal.');

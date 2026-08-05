@@ -11,7 +11,8 @@ export class GoalController {
 
   @Post()
   async create(
-    @Body(new ZodValidationPipe(CreateGoalRequestSchema)) dto: import('@wildtails/contracts').CreateGoalRequest,
+    @Body(new ZodValidationPipe(CreateGoalRequestSchema))
+    dto: import('@wildtails/contracts').CreateGoalRequest,
     @CurrentUser() user: Principal,
   ) {
     const data = await this.goalService.create(user.userId, dto);
@@ -38,7 +39,8 @@ export class GoalController {
   @Patch(':id')
   async update(
     @Param('id') id: string,
-    @Body(new ZodValidationPipe(UpdateGoalRequestSchema)) dto: import('@wildtails/contracts').UpdateGoalRequest,
+    @Body(new ZodValidationPipe(UpdateGoalRequestSchema))
+    dto: import('@wildtails/contracts').UpdateGoalRequest,
     @CurrentUser() user: Principal,
   ) {
     const data = await this.goalService.update(id, user.userId, dto);

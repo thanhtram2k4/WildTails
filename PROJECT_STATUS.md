@@ -10,21 +10,21 @@
 
 ## Phase checklist
 
-| Phase | Name                           | Status      | Human approval      |
-| ----- | ------------------------------ | ----------- | ------------------- |
-| 00    | Project audit and decisions    | DONE        | Approved 2026-07-31 |
-| 01    | Repository bootstrap           | DONE        | Approved 2026-08-03 |
-| 02    | Architecture and contracts     | DONE        | Approved 2026-08-04 |
-| 03    | Identity and planets           | DONE        | Approved 2026-08-04 |
+| Phase | Name                           | Status           | Human approval      |
+| ----- | ------------------------------ | ---------------- | ------------------- |
+| 00    | Project audit and decisions    | DONE             | Approved 2026-07-31 |
+| 01    | Repository bootstrap           | DONE             | Approved 2026-08-03 |
+| 02    | Architecture and contracts     | DONE             | Approved 2026-08-04 |
+| 03    | Identity and planets           | DONE             | Approved 2026-08-04 |
 | 04    | Captain's Cabin and goals      | READY_FOR_REVIEW | Required            |
-| 05    | Planet Feed and moderation     | NOT_STARTED | Required            |
-| 06    | AI Auto-Log                    | NOT_STARTED | Required            |
-| 07    | Gamification                   | NOT_STARTED | Required            |
-| 08    | Real-time Space Dice           | NOT_STARTED | Required            |
-| 09    | Security hardening             | NOT_STARTED | Required            |
-| 10    | Testing and evaluation         | NOT_STARTED | Required            |
-| 11    | DevOps and observability       | NOT_STARTED | Required            |
-| 12    | Final demo and thesis evidence | NOT_STARTED | Required            |
+| 05    | Planet Feed and moderation     | NOT_STARTED      | Required            |
+| 06    | AI Auto-Log                    | NOT_STARTED      | Required            |
+| 07    | Gamification                   | NOT_STARTED      | Required            |
+| 08    | Real-time Space Dice           | NOT_STARTED      | Required            |
+| 09    | Security hardening             | NOT_STARTED      | Required            |
+| 10    | Testing and evaluation         | NOT_STARTED      | Required            |
+| 11    | DevOps and observability       | NOT_STARTED      | Required            |
+| 12    | Final demo and thesis evidence | NOT_STARTED      | Required            |
 
 Valid statuses:
 
@@ -86,7 +86,10 @@ Phase 04 – Captain's Cabin and Goals (2026-08-05):
   - knowledge.integration.spec: 56 tests (journal CRUD, versioning, sharing, revoke,
     concurrency, visibility transitions, tags, folders, goals, pagination, audit,
     content security, SQL injection)
-- E2E tests: 17 tests (cabin-goals.spec.ts, Playwright against real stack)
+- E2E tests: 37 tests (3 Playwright specs against real stack)
+  - cabin-goals.spec: 17 tests (full CRUD + sharing + revoke flow)
+  - cabin-detail-screenshots.spec: 10 tests (functional assertions + 3 screenshots)
+  - phase04-screenshots.spec: 10 tests (all 9 screenshots with logged-in users)
 - Prisma: schema valid, client generated (v7.9.1), 3 migrations applied
 - Migration: phase04_indexes (2 journal indexes + 1 partial unique share index)
 - Build: API (SWC 49 files), Web (webpack, 19 routes), Worker (SWC)
@@ -94,7 +97,10 @@ Phase 04 – Captain's Cabin and Goals (2026-08-05):
 - Secrets: scanned, no real secrets
 - Zod: only 4.4.3 across all packages
 - Runtime health: Web (3100), API (3000), Worker (3001) all healthy
-- Screenshots: 6 captured from running application
+- Screenshots: 9 captured from running application (all verified with real data)
+  - captains-cabin-dashboard, journal-list, journal-editor, journal-detail,
+    journal-sharing, goals-list, goal-editor, goal-progress, empty-state
+- Contract amendment: DELETE /tags/{id} added as D16 (human-approved)
 - Evidence: docs/evidence/phase-04/
 
 Phase 03 – Identity and Planets (2026-08-04):

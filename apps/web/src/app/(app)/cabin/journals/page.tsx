@@ -118,9 +118,9 @@ export default function JournalsPage() {
     async function loadFilters() {
       try {
         const [foldersEnv, tagsEnv, goalsEnv] = await Promise.all([
-          apiGet<FolderResponse[]>('/knowledge/folders'),
-          apiGet<TagResponse[]>('/knowledge/tags'),
-          apiGet<GoalResponse[]>('/knowledge/goals'),
+          apiGet<FolderResponse[]>('/folders'),
+          apiGet<TagResponse[]>('/tags'),
+          apiGet<GoalResponse[]>('/goals'),
         ]);
         setFilterFolders(Array.isArray(foldersEnv.data) ? foldersEnv.data : []);
         setFilterTags(Array.isArray(tagsEnv.data) ? tagsEnv.data : []);
@@ -143,7 +143,7 @@ export default function JournalsPage() {
     if (selectedTag) params.set('tagId', selectedTag);
     if (selectedGoal) params.set('goalId', selectedGoal);
 
-    apiGet<JournalResponse[]>(`/knowledge/journals?${params.toString()}`).then(
+    apiGet<JournalResponse[]>(`/journals?${params.toString()}`).then(
       (env) => {
         if (cancelled) return;
         setListRef.current({
@@ -179,7 +179,7 @@ export default function JournalsPage() {
       if (activeFolderId) params.set('folderId', activeFolderId);
       if (selectedTag) params.set('tagId', selectedTag);
       if (selectedGoal) params.set('goalId', selectedGoal);
-      const env = await apiGet<JournalResponse[]>(`/knowledge/journals?${params.toString()}`);
+      const env = await apiGet<JournalResponse[]>(`/journals?${params.toString()}`);
       setListState((prev) => {
         if (prev.status !== 'success') return prev;
         return {

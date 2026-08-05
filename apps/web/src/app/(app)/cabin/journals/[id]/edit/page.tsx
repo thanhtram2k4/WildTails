@@ -28,7 +28,7 @@ export default function EditJournalPage({ params }: EditJournalPageProps) {
     let cancelled = false;
     setRef.current({ status: 'loading' });
 
-    apiGet<JournalResponse>(`/knowledge/journals/${id}`).then(
+    apiGet<JournalResponse>(`/journals/${id}`).then(
       (env) => {
         if (cancelled) return;
         setRef.current({ status: 'success', journal: env.data });

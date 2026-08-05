@@ -12,7 +12,8 @@ export class ShareController {
   @Post(':id/share')
   async grant(
     @Param('id') journalId: string,
-    @Body(new ZodValidationPipe(CreateSharePermissionRequestSchema)) dto: { journalId?: string; userId: string; expiresAt?: string },
+    @Body(new ZodValidationPipe(CreateSharePermissionRequestSchema))
+    dto: { journalId?: string; userId: string; expiresAt?: string },
     @CurrentUser() user: Principal,
   ) {
     const data = await this.shareService.grant(journalId, user.userId, dto.userId, dto.expiresAt);

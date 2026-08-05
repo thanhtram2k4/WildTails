@@ -11,7 +11,8 @@ export class FolderController {
 
   @Post()
   async create(
-    @Body(new ZodValidationPipe(CreateFolderRequestSchema)) dto: import('@wildtails/contracts').CreateFolderRequest,
+    @Body(new ZodValidationPipe(CreateFolderRequestSchema))
+    dto: import('@wildtails/contracts').CreateFolderRequest,
     @CurrentUser() user: Principal,
   ) {
     const data = await this.folderService.create(user.userId, dto);
@@ -32,7 +33,8 @@ export class FolderController {
   @Patch(':id')
   async update(
     @Param('id') id: string,
-    @Body(new ZodValidationPipe(UpdateFolderRequestSchema)) dto: import('@wildtails/contracts').UpdateFolderRequest,
+    @Body(new ZodValidationPipe(UpdateFolderRequestSchema))
+    dto: import('@wildtails/contracts').UpdateFolderRequest,
     @CurrentUser() user: Principal,
   ) {
     const data = await this.folderService.update(id, user.userId, dto);

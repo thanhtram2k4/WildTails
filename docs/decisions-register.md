@@ -21,6 +21,7 @@ Updated: 2026-07-31
 | D13 | Logout request body           | POST /auth/logout requires access token auth AND a request body `{ refreshToken }`. Server revokes the presented refresh token. Replay follows ADR-002 family rules                                            | ADR-002 | 2026-08-04 |
 | D14 | AI job cancel response code   | POST /ai/jobs/{id}/cancel returns 202 Accepted. Cancellation is asynchronous; job may reach CANCELLED or COMPLETED                                                                                             | ADR-004 | 2026-08-04 |
 | D15 | Planet membership rejoin      | Rejoin reactivates existing row: set leftAt=null, role=MEMBER (unless admin assigns), joinedAt=now(). No duplicate row. Leave/rejoin history via AuditLog                                                      | -       | 2026-08-04 |
+| D16 | DELETE /tags/{id} endpoint    | Added as a Phase 04 contract amendment. Owner-only, hard deletes the tag and cascades JournalTag associations. Journals are never deleted. Privacy-safe 404 for non-owner or missing tags. Human-approved      | -       | 2026-08-05 |
 
 ## Approved decisions (from documentation)
 

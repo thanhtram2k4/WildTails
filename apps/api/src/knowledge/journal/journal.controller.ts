@@ -11,7 +11,8 @@ export class JournalController {
 
   @Post()
   async create(
-    @Body(new ZodValidationPipe(CreateJournalRequestSchema)) dto: import('@wildtails/contracts').CreateJournalRequest,
+    @Body(new ZodValidationPipe(CreateJournalRequestSchema))
+    dto: import('@wildtails/contracts').CreateJournalRequest,
     @CurrentUser() user: Principal,
   ) {
     const data = await this.journalService.create(user.userId, dto);
@@ -47,7 +48,8 @@ export class JournalController {
   @Patch(':id')
   async update(
     @Param('id') id: string,
-    @Body(new ZodValidationPipe(UpdateJournalRequestSchema)) dto: import('@wildtails/contracts').UpdateJournalRequest,
+    @Body(new ZodValidationPipe(UpdateJournalRequestSchema))
+    dto: import('@wildtails/contracts').UpdateJournalRequest,
     @CurrentUser() user: Principal,
   ) {
     const data = await this.journalService.update(id, user.userId, dto);

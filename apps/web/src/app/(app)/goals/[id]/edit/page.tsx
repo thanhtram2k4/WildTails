@@ -28,7 +28,7 @@ export default function EditGoalPage({ params }: EditGoalPageProps) {
     let cancelled = false;
     setRef.current({ status: 'loading' });
 
-    apiGet<GoalResponse>(`/knowledge/goals/${id}`).then(
+    apiGet<GoalResponse>(`/goals/${id}`).then(
       (env) => {
         if (cancelled) return;
         setRef.current({ status: 'success', goal: env.data });

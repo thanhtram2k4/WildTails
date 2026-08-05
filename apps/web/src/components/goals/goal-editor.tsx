@@ -40,7 +40,7 @@ export function GoalEditor({ existing }: GoalEditorProps) {
           deadline: deadline ? new Date(deadline).toISOString() : undefined,
           progress,
         };
-        await apiPatch(`/knowledge/goals/${existing.id}`, payload);
+        await apiPatch(`/goals/${existing.id}`, payload);
         router.push(`/goals/${existing.id}`);
       } else {
         const payload: Record<string, unknown> = {
@@ -48,7 +48,7 @@ export function GoalEditor({ existing }: GoalEditorProps) {
           description: description || undefined,
           deadline: deadline ? new Date(deadline).toISOString() : undefined,
         };
-        const env = await apiPost<GoalResponse>('/knowledge/goals', payload);
+        const env = await apiPost<GoalResponse>('/goals', payload);
         router.push(`/goals/${env.data.id}`);
       }
     } catch (err) {

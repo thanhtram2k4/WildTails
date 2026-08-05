@@ -55,9 +55,9 @@ export function JournalEditor({ existing }: JournalEditorProps) {
     async function load() {
       try {
         const [foldersEnv, tagsEnv, goalsEnv] = await Promise.all([
-          apiGet<FolderResponse[]>('/knowledge/folders'),
-          apiGet<TagResponse[]>('/knowledge/tags'),
-          apiGet<GoalResponse[]>('/knowledge/goals'),
+          apiGet<FolderResponse[]>('/folders'),
+          apiGet<TagResponse[]>('/tags'),
+          apiGet<GoalResponse[]>('/goals'),
         ]);
         if (!cancelled) {
           setOptions({
@@ -106,10 +106,10 @@ export function JournalEditor({ existing }: JournalEditorProps) {
 
     try {
       if (existing) {
-        await apiPatch(`/knowledge/journals/${existing.id}`, payload);
+        await apiPatch(`/journals/${existing.id}`, payload);
         router.push(`/cabin/journals/${existing.id}`);
       } else {
-        const env = await apiPost<JournalResponse>('/knowledge/journals', payload);
+        const env = await apiPost<JournalResponse>('/journals', payload);
         router.push(`/cabin/journals/${env.data.id}`);
       }
     } catch (err) {

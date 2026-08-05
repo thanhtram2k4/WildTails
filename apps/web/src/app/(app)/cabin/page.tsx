@@ -85,8 +85,8 @@ export default function CabinPage() {
     async function load() {
       try {
         const [journalsEnv, goalsEnv] = await Promise.all([
-          apiGet<JournalResponse[]>('/knowledge/journals?limit=5'),
-          apiGet<GoalResponse[]>('/knowledge/goals?limit=3'),
+          apiGet<JournalResponse[]>('/journals?limit=5'),
+          apiGet<GoalResponse[]>('/goals?limit=3'),
         ]);
 
         const journals = Array.isArray(journalsEnv.data) ? journalsEnv.data : [];

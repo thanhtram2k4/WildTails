@@ -14,7 +14,18 @@
 
 1. Added `maxLength: 50000` to body in both `CreateJournalRequest` and `UpdateJournalRequest`.
 2. Added `maxItems: 20` to tagIds in both request schemas.
-3. Added `DELETE /tags/{id}` endpoint.
+3. Added `DELETE /tags/{id}` endpoint — **Phase 04 contract amendment (D16)**.
+
+### DELETE /tags/{id} — Contract Amendment
+
+This endpoint was **not** part of the original frozen Phase 02 OpenAPI specification. It was added as a human-approved Phase 04 amendment (decision D16, 2026-08-05).
+
+- **Reason**: Tag lifecycle requires deletion. Without it, users accumulate tags indefinitely with no cleanup mechanism. The original Phase 02 contract omitted this endpoint.
+- **Approval source**: Human approval in Phase 04 implementation instructions.
+- **Authorization rule**: Owner-only. The tag's `ownerId` must match the authenticated principal's `userId`. Tag ownership is verified via `tag.findFirst({ where: { id, ownerId } })`.
+- **Privacy-safe 404**: Returns 404 (NOT_FOUND) when the tag does not exist OR belongs to another user. Does not return 403, preventing UUID enumeration.
+- **Effect on JournalTag relations**: Deleting a tag cascades to delete `JournalTag` join rows (Prisma `onDelete: Cascade` on the Tag relation). Journals themselves are never deleted.
+- **Confirmation**: Integration test `"deleting a tag preserves journals"` verifies that after tag deletion, the associated journal still exists with HTTP 200 but the tag association is removed.
 
 ### Prisma Schema (`packages/database/prisma/schema.prisma`)
 

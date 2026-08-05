@@ -27,9 +27,7 @@ export function SharingPanel({ journalId }: SharingPanelProps) {
   const load = useCallback(async () => {
     setRef.current({ status: 'loading' });
     try {
-      const env = await apiGet<SharePermissionResponse[]>(
-        `/knowledge/journals/${journalId}/shares`,
-      );
+      const env = await apiGet<SharePermissionResponse[]>(`/journals/${journalId}/shares`);
       setRef.current({ status: 'success', shares: env.data });
     } catch (err) {
       setRef.current({
@@ -52,7 +50,7 @@ export function SharingPanel({ journalId }: SharingPanelProps) {
     try {
       const body: Record<string, string> = { journalId, userId };
       if (grantExpiry) body['expiresAt'] = new Date(grantExpiry).toISOString();
-      await apiPost(`/knowledge/journals/${journalId}/shares`, body);
+      await apiPost(`/journals/${journalId}/share`, body);
       setGrantUserId('');
       setGrantExpiry('');
       setRetry((n) => n + 1);
@@ -66,7 +64,7 @@ export function SharingPanel({ journalId }: SharingPanelProps) {
   async function handleRevoke(shareId: string) {
     setRevokingId(shareId);
     try {
-      await apiDelete(`/knowledge/journals/${journalId}/shares/${shareId}`);
+      await apiDelete(`/journals/${journalId}/share/${shareId}`);
       setRetry((n) => n + 1);
     } catch (err) {
       alert(err instanceof ApiError ? err.message : 'Failed to revoke access.');
