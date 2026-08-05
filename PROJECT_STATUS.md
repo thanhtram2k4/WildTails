@@ -5,7 +5,7 @@
 - Phase: 04
 - Status: READY_FOR_REVIEW
 - Active branch: phase/04-captains-cabin-and-goals
-- Last verified commit: pending
+- Last verified commit: 5d81c26
 - Updated at: 2026-08-05
 
 ## Phase checklist
