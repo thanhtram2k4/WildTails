@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-05
 **Branch:** phase/05-planet-feed-and-moderation
-**Status:** READY_FOR_REVIEW
+**Status:** DONE (human-approved 2026-08-05)
 
 ## Decisions Recorded
 
@@ -140,8 +140,7 @@ Single additive migration: `20260805013911_phase05_moderation_fields`
 5. No notification integration for social actions.
 6. Polymorphic Report FK lacks CHECK constraint (known from F-15, deferred).
 
-## Items Requiring Human Visual Approval
+## Human Visual Approval
 
-- 5 screenshots in docs/evidence/phase-05/screenshots/ need visual review
-- PostResponse contract change (journalId removed, author added) — already approved via D24/D27
-- New OpenAPI endpoints (GET /planets/{id}/reports, PATCH /reports/{id}) — already approved via D19
+All 11 screenshots visually approved by human reviewer on 2026-08-05.
+See `docs/evidence/phase-05/screenshot-verification.md` for full verification matrix.

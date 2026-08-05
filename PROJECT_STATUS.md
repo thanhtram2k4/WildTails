@@ -3,28 +3,28 @@
 ## Current phase
 
 - Phase: 05
-- Status: READY_FOR_REVIEW
+- Status: DONE
 - Active branch: phase/05-planet-feed-and-moderation
-- Last verified commit: 6d0d708
+- Last verified commit: 037e0d6
 - Updated at: 2026-08-05
 
 ## Phase checklist
 
-| Phase | Name                           | Status           | Human approval      |
-| ----- | ------------------------------ | ---------------- | ------------------- |
-| 00    | Project audit and decisions    | DONE             | Approved 2026-07-31 |
-| 01    | Repository bootstrap           | DONE             | Approved 2026-08-03 |
-| 02    | Architecture and contracts     | DONE             | Approved 2026-08-04 |
-| 03    | Identity and planets           | DONE             | Approved 2026-08-04 |
-| 04    | Captain's Cabin and goals      | DONE             | Approved 2026-08-05 |
-| 05    | Planet Feed and moderation     | READY_FOR_REVIEW | Required            |
-| 06    | AI Auto-Log                    | NOT_STARTED      | Required            |
-| 07    | Gamification                   | NOT_STARTED      | Required            |
-| 08    | Real-time Space Dice           | NOT_STARTED      | Required            |
-| 09    | Security hardening             | NOT_STARTED      | Required            |
-| 10    | Testing and evaluation         | NOT_STARTED      | Required            |
-| 11    | DevOps and observability       | NOT_STARTED      | Required            |
-| 12    | Final demo and thesis evidence | NOT_STARTED      | Required            |
+| Phase | Name                           | Status      | Human approval      |
+| ----- | ------------------------------ | ----------- | ------------------- |
+| 00    | Project audit and decisions    | DONE        | Approved 2026-07-31 |
+| 01    | Repository bootstrap           | DONE        | Approved 2026-08-03 |
+| 02    | Architecture and contracts     | DONE        | Approved 2026-08-04 |
+| 03    | Identity and planets           | DONE        | Approved 2026-08-04 |
+| 04    | Captain's Cabin and goals      | DONE        | Approved 2026-08-05 |
+| 05    | Planet Feed and moderation     | DONE        | Approved 2026-08-05 |
+| 06    | AI Auto-Log                    | NOT_STARTED | Required            |
+| 07    | Gamification                   | NOT_STARTED | Required            |
+| 08    | Real-time Space Dice           | NOT_STARTED | Required            |
+| 09    | Security hardening             | NOT_STARTED | Required            |
+| 10    | Testing and evaluation         | NOT_STARTED | Required            |
+| 11    | DevOps and observability       | NOT_STARTED | Required            |
+| 12    | Final demo and thesis evidence | NOT_STARTED | Required            |
 
 Valid statuses:
 
