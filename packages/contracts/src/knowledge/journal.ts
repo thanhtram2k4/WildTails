@@ -1,14 +1,20 @@
 import { z } from 'zod';
 import { VisibilitySchema } from '../enums/visibility.js';
 
+/** Maximum journal body length in characters. */
+export const JOURNAL_BODY_MAX_LENGTH = 50_000;
+
+/** Maximum number of tags that can be assigned to a single journal. */
+export const JOURNAL_MAX_TAGS = 20;
+
 export const CreateJournalRequestSchema = z.object({
   title: z.string().min(1).max(255),
   /** Journal body. May be null for a title-only stub. */
-  body: z.string().optional(),
+  body: z.string().max(JOURNAL_BODY_MAX_LENGTH).optional(),
   planetId: z.string().uuid().optional(),
   /** Defaults to PRIVATE at the service layer if omitted. */
   visibility: VisibilitySchema.default('PRIVATE'),
-  tagIds: z.array(z.string().uuid()).optional(),
+  tagIds: z.array(z.string().uuid()).max(JOURNAL_MAX_TAGS).optional(),
   folderId: z.string().uuid().optional(),
   goalId: z.string().uuid().optional(),
 });

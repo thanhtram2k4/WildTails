@@ -2,11 +2,11 @@
 
 ## Current phase
 
-- Phase: 03
-- Status: DONE
-- Active branch: phase/03-identity-and-planets
-- Last verified commit: b3852c9
-- Updated at: 2026-08-04
+- Phase: 04
+- Status: READY_FOR_REVIEW
+- Active branch: phase/04-captains-cabin-and-goals
+- Last verified commit: pending
+- Updated at: 2026-08-05
 
 ## Phase checklist
 
@@ -16,7 +16,7 @@
 | 01    | Repository bootstrap           | DONE        | Approved 2026-08-03 |
 | 02    | Architecture and contracts     | DONE        | Approved 2026-08-04 |
 | 03    | Identity and planets           | DONE        | Approved 2026-08-04 |
-| 04    | Captain's Cabin and goals      | NOT_STARTED | Required            |
+| 04    | Captain's Cabin and goals      | READY_FOR_REVIEW | Required            |
 | 05    | Planet Feed and moderation     | NOT_STARTED | Required            |
 | 06    | AI Auto-Log                    | NOT_STARTED | Required            |
 | 07    | Gamification                   | NOT_STARTED | Required            |
@@ -58,6 +58,44 @@ Phase 02 decisions resolved (D13-D15, approved 2026-08-04):
 None.
 
 ## Latest test evidence
+
+Phase 04 – Captain's Cabin and Goals (2026-08-05):
+
+- Install: pnpm install --frozen-lockfile passes
+- Lint: 9 packages pass ESLint (0 errors)
+- Format: all files pass Prettier
+- Typecheck: 9 packages pass tsc --noEmit (strict mode, 0 errors)
+- Tests: 215 total across 15 files, all pass
+  - contracts.spec: 23 tests (incl. tag contracts, journal limits)
+  - worker.spec: 1 test
+  - health.controller.spec: 1 test
+  - zod-validation.pipe.spec: 6 tests
+  - http-exception.filter.spec: 8 tests
+  - auth.service.spec: 11 tests
+  - user.service.spec: 8 tests
+  - planet.service.spec: 13 tests
+  - journal.service.spec: 30 tests (CRUD, versioning, visibility transitions)
+  - journal-permission.service.spec: 12 tests (ADR-003 permission evaluation)
+  - folder.service.spec: 16 tests (nesting depth, cycles, deletion)
+  - tag.service.spec: 8 tests (normalization, uniqueness)
+  - share.service.spec: 14 tests (grant, revoke, concurrency)
+  - goal.service.spec: 19 tests (CRUD, progress, unlink)
+  - markdown-renderer.test: 22 tests (XSS, script, event handlers, javascript: URLs)
+- Integration tests: 68 total across 2 files (PostgreSQL-backed)
+  - auth.integration.spec: 12 tests
+  - knowledge.integration.spec: 56 tests (journal CRUD, versioning, sharing, revoke,
+    concurrency, visibility transitions, tags, folders, goals, pagination, audit,
+    content security, SQL injection)
+- E2E tests: 17 tests (cabin-goals.spec.ts, Playwright against real stack)
+- Prisma: schema valid, client generated (v7.9.1), 3 migrations applied
+- Migration: phase04_indexes (2 journal indexes + 1 partial unique share index)
+- Build: API (SWC 49 files), Web (webpack, 19 routes), Worker (SWC)
+- OpenAPI: valid (0 errors, 5 warnings)
+- Secrets: scanned, no real secrets
+- Zod: only 4.4.3 across all packages
+- Runtime health: Web (3100), API (3000), Worker (3001) all healthy
+- Screenshots: 6 captured from running application
+- Evidence: docs/evidence/phase-04/
 
 Phase 03 – Identity and Planets (2026-08-04):
 

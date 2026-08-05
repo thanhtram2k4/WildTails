@@ -12,6 +12,8 @@
     "format": "prettier --write .",
     "typecheck": "pnpm -r run typecheck",
     "test": "pnpm -r run test",
+    "test:integration": "vitest run --config apps/api/vitest.integration.config.ts",
+    "test:e2e": "pnpm --filter @wildtails/web exec playwright test",
     "build": "pnpm -r run build",
     "openapi:lint": "redocly lint docs/api/openapi.yaml --format stylish"
   },

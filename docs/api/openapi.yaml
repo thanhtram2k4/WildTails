@@ -376,6 +376,7 @@ components:
           maxLength: 255
         body:
           type: string
+          maxLength: 50000
           description: May be omitted for a title-only stub.
         planetId:
           type: string
@@ -385,6 +386,7 @@ components:
           default: PRIVATE
         tagIds:
           type: array
+          maxItems: 20
           items:
             type: string
             format: uuid
@@ -405,6 +407,7 @@ components:
           maxLength: 255
         body:
           type: string
+          maxLength: 50000
         planetId:
           type: string
           format: uuid
@@ -412,6 +415,7 @@ components:
           $ref: '#/components/schemas/Visibility'
         tagIds:
           type: array
+          maxItems: 20
           items:
             type: string
             format: uuid
@@ -2191,6 +2195,36 @@ paths:
                           $ref: '#/components/schemas/TagResponse'
         '401':
           $ref: '#/components/responses/401'
+
+  /tags/{id}:
+    delete:
+      operationId: deleteTag
+      summary: Delete a tag (owner only; journals retain their content)
+      tags: [Knowledge]
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: Tag deleted
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        required: [deleted]
+                        properties:
+                          deleted:
+                            type: boolean
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
 
   # =========================================================================
   # Goals

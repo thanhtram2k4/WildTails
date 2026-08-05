@@ -347,6 +347,8 @@ model Journal {
 
   @@index([ownerId, createdAt(sort: Desc)])
   @@index([ownerId, visibility])
+  @@index([ownerId, folderId])
+  @@index([ownerId, deletedAt, updatedAt(sort: Desc)])
   @@index([planetId])
   @@index([deletedAt])
   @@map("journals")
